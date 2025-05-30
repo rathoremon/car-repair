@@ -1,62 +1,71 @@
-import React from "react";
+import React, { useState } from "react";
 import {
+  Card,
+  CardContent,
   Typography,
-  Paper,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Select,
+  Button,
+  TextField,
   MenuItem,
-  FormControl,
+  Grid,
+  List,
+  ListItem,
 } from "@mui/material";
 
-const users = [
-  { id: 1, name: "Admin A", email: "a@example.com", role: "ops" },
-  { id: 2, name: "Admin B", email: "b@example.com", role: "support" },
+const roles = ["admin", "ops", "finance", "support"];
+const permissions = [
+  "View Users",
+  "Manage Providers",
+  "Edit Services",
+  "View Reports",
+  "Manage Tickets",
 ];
 
 export default function RBACManager() {
-  const handleRoleChange = (id, newRole) => {
-    console.log(`Update role for ${id} to ${newRole}`);
+  const [selectedRole, setSelectedRole] = useState("");
+  const [assignedPermissions, setAssignedPermissions] = useState([]);
+
+  const handlePermissionToggle = (perm) => {
+    setAssignedPermissions((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
   };
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        Role-Based Access Control
-      </Typography>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Role</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <FormControl fullWidth>
-                  <Select
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                  >
-                    <MenuItem value="ops">Ops</MenuItem>
-                    <MenuItem value="support">Support</MenuItem>
-                    <MenuItem value="finance">Finance</MenuItem>
-                    <MenuItem value="superadmin">Super Admin</MenuItem>
-                  </Select>
-                </FormControl>
-              </TableCell>
-            </TableRow>
+    <Card>
+      <CardContent>
+        <Typography variant="h5">Role-Based Access Control</Typography>
+        <TextField
+          select
+          label="Select Role"
+          fullWidth
+          margin="normal"
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
+        >
+          {roles.map((role) => (
+            <MenuItem key={role} value={role}>
+              {role}
+            </MenuItem>
           ))}
-        </TableBody>
-      </Table>
-    </Paper>
+        </TextField>
+
+        <Typography variant="h6">Permissions</Typography>
+        <List>
+          {permissions.map((perm) => (
+            <ListItem
+              key={perm}
+              button
+              selected={assignedPermissions.includes(perm)}
+              onClick={() => handlePermissionToggle(perm)}
+            >
+              {perm}
+            </ListItem>
+          ))}
+        </List>
+        <Button variant="contained" color="primary">
+          Save Permissions
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
