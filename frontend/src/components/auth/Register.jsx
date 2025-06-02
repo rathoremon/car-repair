@@ -10,8 +10,16 @@ import {
   HiOutlineEyeOff,
   HiOutlineExclamationCircle,
   HiOutlineCheckCircle,
+  HiOutlineArrowLeft,
 } from "react-icons/hi";
 import { FcGoogle } from "react-icons/fc";
+import { useDispatch, useSelector } from "react-redux";
+import { register as registerThunk } from "../../features/auth/authSlice";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer, Slide } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { auth } from "../../firebase"; // Import Firebase auth
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 function useCapsLock(ref) {
   const [capsLock, setCapsLock] = useState(false);
@@ -33,6 +41,10 @@ function useCapsLock(ref) {
 
 export default function Register({ onSwitch }) {
   const theme = useTheme();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { loading } = useSelector((state) => state.auth);
+
   const [reg, setReg] = useState({
     username: "",
     email: "",
@@ -56,6 +68,25 @@ export default function Register({ onSwitch }) {
     { value: "provider", label: "Provider" },
   ];
 
+  // Define a setupRecaptcha function here if not already available
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: (response) => {
+            console.log("reCAPTCHA Resolved", response);
+          },
+          "expired-callback": () => {
+            toast.error("Recaptcha expired. Please try again.");
+          },
+        },
+        auth
+      );
+    }
+  };
+
   useEffect(() => {
     const errs = {};
     if (touched.username && !reg.username.trim())
@@ -77,7 +108,7 @@ export default function Register({ onSwitch }) {
     setTouched((prev) => ({ ...prev, [name]: true }));
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setTouched({
       username: true,
@@ -86,22 +117,91 @@ export default function Register({ onSwitch }) {
       password: true,
       confirm: true,
     });
+
     if (Object.keys(errors).length > 0) return;
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 2000);
+
+    try {
+      const formattedPhone = reg.phone.startsWith("+")
+        ? reg.phone
+        : `+91${reg.phone}`;
+
+      const payload = {
+        name: reg.username,
+        email: reg.email,
+        phone: formattedPhone, // <-- Save the formatted phone
+        password: reg.password,
+        role: tab,
+      };
+
+      const resultAction = await dispatch(registerThunk(payload));
+
+      if (registerThunk.fulfilled.match(resultAction)) {
+        // ✅ Setup recaptcha and initiate Firebase OTP
+        setupRecaptcha(); // Ensure reCAPTCHA is ready
+        const appVerifier = window.recaptchaVerifier;
+
+        const confirmationResult = await signInWithPhoneNumber(
+          auth,
+          formattedPhone,
+          appVerifier
+        );
+
+        window.confirmationResult = confirmationResult;
+
+        setSuccess(true);
+        toast.success("Registration successful! OTP sent.", {
+          position: "top-center",
+          transition: Slide,
+          autoClose: 1200,
+        });
+
+        setTimeout(() => {
+          setSuccess(false);
+          navigate("/verify-otp");
+        }, 1200);
+      } else {
+        const msg =
+          resultAction.payload?.error ||
+          resultAction.error?.message ||
+          "Registration failed";
+        toast.error(msg, { position: "top-center", transition: Slide });
+      }
+    } catch (err) {
+      let errorMessage =
+        err.message || "Registration failed. Please try again.";
+      if (err.code === "auth/invalid-phone-number") {
+        errorMessage = "Invalid phone number format.";
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage = "Too many requests. Please try again later.";
+      } else if (err.code === "auth/captcha-check-failed") {
+        errorMessage = "Recaptcha verification failed.";
+      }
+      toast.error(errorMessage, { position: "top-center", transition: Slide });
+    }
   };
 
   return (
     <div
       className="flex items-center justify-center w-full p-0 font-sans"
       style={{
-        minHeight: "100vh",
-        height: "100vh",
         background: `linear-gradient(120deg, ${theme.palette.background.default} 0%, #fff 100%)`,
       }}
     >
+      <div id="recaptcha-container"></div>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <form
-        className="w-full max-w-sm sm:max-w-md shadow-xl px-4 sm:px-6 py-5 flex flex-col justify-center border bg-white relative"
+        className="w-full max-w-sm sm:max-w-md bg-white px-4 sm:px-6 py-5 flex flex-col justify-center relative"
         onSubmit={handleSubmit}
         autoComplete="off"
         aria-label="Register form"
@@ -118,7 +218,12 @@ export default function Register({ onSwitch }) {
           <button
             type="button"
             className="flex items-center justify-center gap-2 w-full py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition font-semibold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            onClick={() => alert("Google login not implemented in this demo.")}
+            onClick={() =>
+              toast.info("Google login not implemented in this demo.", {
+                position: "top-center",
+                transition: Slide,
+              })
+            }
             aria-label="Sign up with Google"
           >
             <FcGoogle className="text-xl" aria-hidden="true" />
@@ -450,11 +555,12 @@ export default function Register({ onSwitch }) {
             color: "#fff",
           }}
           aria-label="Register"
-          disabled={Object.keys(errors).length > 0}
+          disabled={Object.keys(errors).length > 0 || loading}
         >
-          Register
+          {loading ? "Registering..." : "Register"}
         </button>
-        <div className="mt-2 text-center text-xs text-gray-600">
+        <div className="mt-3 text-center text-xs text-gray-600 flex items-center justify-center gap-2">
+          <HiOutlineArrowLeft className="animate-bounce-x" aria-hidden="true" />
           Already have an account?{" "}
           <button
             type="button"

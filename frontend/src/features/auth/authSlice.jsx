@@ -6,15 +6,21 @@ export const login = createAsyncThunk(
   "auth/login",
   async (payload, { rejectWithValue }) => {
     try {
-      // Can support login with phone or email
       const res = await axios.post(
         "http://localhost:5000/api/auth/login",
         payload,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
+      // Capture both error and next step
+      const data = err.response?.data || {};
+      return rejectWithValue({
+        error: data.error || err.message || "Login failed",
+        next: data.next || null, // capture `next`
+      });
     }
   }
 );
@@ -106,6 +112,7 @@ const authSlice = createSlice({
         state.verified = !!action.payload.user?.isOtpVerified;
         state.error = null;
       })
+
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
