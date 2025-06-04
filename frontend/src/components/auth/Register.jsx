@@ -43,6 +43,7 @@ export default function Register({ onSwitch }) {
   const theme = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const recaptchaVerifierRef = useRef(null);
   const { loading } = useSelector((state) => state.auth);
 
   const [reg, setReg] = useState({
@@ -68,10 +69,9 @@ export default function Register({ onSwitch }) {
     { value: "provider", label: "Provider" },
   ];
 
-  // Define a setupRecaptcha function here if not already available
-  const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
+  const setupRecaptcha = async () => {
+    if (!recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
         "recaptcha-container",
         {
           size: "invisible",
@@ -84,6 +84,7 @@ export default function Register({ onSwitch }) {
         },
         auth
       );
+      await recaptchaVerifierRef.current.render(); // ✅ Must render
     }
   };
 
@@ -121,32 +122,30 @@ export default function Register({ onSwitch }) {
     if (Object.keys(errors).length > 0) return;
 
     try {
-      const formattedPhone = reg.phone.startsWith("+")
-        ? reg.phone
-        : `+91${reg.phone}`;
-
       const payload = {
         name: reg.username,
         email: reg.email,
-        phone: formattedPhone, // <-- Save the formatted phone
+        phone: reg.phone,
         password: reg.password,
         role: tab,
       };
-
       const resultAction = await dispatch(registerThunk(payload));
 
       if (registerThunk.fulfilled.match(resultAction)) {
         // ✅ Setup recaptcha and initiate Firebase OTP
-        setupRecaptcha(); // Ensure reCAPTCHA is ready
-        const appVerifier = window.recaptchaVerifier;
+        const phoneNumber = reg.phone.startsWith("+")
+          ? reg.phone
+          : `+91${reg.phone}`;
+        await setupRecaptcha();
+        const appVerifier = recaptchaVerifierRef.current;
 
         const confirmationResult = await signInWithPhoneNumber(
           auth,
-          formattedPhone,
+          phoneNumber,
           appVerifier
         );
 
-        window.confirmationResult = confirmationResult;
+        window.confirmationResult = confirmationResult; // ⬅️ Store it globally
 
         setSuccess(true);
         toast.success("Registration successful! OTP sent.", {

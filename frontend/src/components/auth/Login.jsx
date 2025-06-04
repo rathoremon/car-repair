@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTheme } from "@mui/material/styles";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   HiOutlineMail,
   HiOutlineLockClosed,
@@ -8,13 +10,13 @@ import {
   HiOutlineArrowLeft,
 } from "react-icons/hi";
 import { FcGoogle } from "react-icons/fc";
-import { useTheme } from "@mui/material/styles";
-import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer, Slide } from "react-toastify";
 import { login as loginThunk } from "../../features/auth/authSlice";
 import "react-toastify/dist/ReactToastify.css";
+import { auth } from "../../firebase"; // Import Firebase auth
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 function useCapsLock(ref) {
   const [capsLock, setCapsLock] = useState(false);
@@ -47,6 +49,24 @@ export default function Login({ onSwitch }) {
   const passwordRef = useRef();
   const capsLock = useCapsLock(passwordRef);
 
+  const setupRecaptcha = async () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: (response) => {
+            console.log("reCAPTCHA Resolved", response);
+          },
+          "expired-callback": () => {
+            toast.error("Recaptcha expired. Please try again.");
+          },
+        },
+        auth
+      );
+    }
+  };
+
   useEffect(() => {
     const errs = {};
     if (touched.emailOrUsername && !login.emailOrUsername.trim())
@@ -62,6 +82,12 @@ export default function Login({ onSwitch }) {
     setTouched((prev) => ({ ...prev, [name]: true }));
   }, []);
 
+  function formatPhone(phone) {
+    let p = phone.replace(/\D/g, "");
+    if (!p.startsWith("91")) p = "91" + p;
+    return "+" + p;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setTouched({ emailOrUsername: true, password: true });
@@ -72,41 +98,57 @@ export default function Login({ onSwitch }) {
     }
 
     try {
-      const payload = login.emailOrUsername.includes("@")
+      const isEmail = login.emailOrUsername.includes("@");
+      const payload = isEmail
         ? { email: login.emailOrUsername }
-        : {
-            phone: login.emailOrUsername.startsWith("+")
-              ? login.emailOrUsername
-              : `+91${login.emailOrUsername}`,
-          };
+        : { phone: formatPhone(login.emailOrUsername) };
 
       payload.password = login.password;
 
       const resultAction = await dispatch(loginThunk(payload));
 
-      // 🔥 IMPORTANT: Check for `next` first
       const { user, next } = resultAction.payload || {};
 
       if (next === "verify-otp") {
+        // 🔐 Trigger Firebase OTP
+        await setupRecaptcha();
+        const appVerifier = recaptchaVerifierRef.current;
+        const phoneNumber = user.phone;
+
+        const confirmationResult = await signInWithPhoneNumber(
+          auth,
+          phoneNumber,
+          appVerifier
+        );
+
+        window.confirmationResult = confirmationResult;
+
+        toast.success("OTP sent successfully.");
         navigate("/verify-otp");
       } else if (next === "onboarding") {
         navigate("/onboarding");
       } else if (user) {
-        // ✅ Successful login
         toast.success(`Welcome back, ${user.name || "User"}!`);
 
-        if (user.role === "provider") {
-          navigate("/provider/dashboard");
-        } else if (user.role === "admin") {
-          navigate("/admin/dashboard");
+        // ✅ Auto-redirect based on onboardingComplete and role
+        if (user.onboardingComplete) {
+          if (user.role === "provider") {
+            navigate("/provider/dashboard");
+          } else if (user.role === "customer") {
+            navigate("/customer/home");
+          } else if (user.role === "admin") {
+            navigate("/admin/dashboard");
+          } else {
+            navigate("/"); // fallback, if some unknown role
+          }
         } else {
-          navigate("/customer/home");
+          navigate("/onboarding"); // fallback, if onboarding not complete
         }
       } else {
-        // Unexpected response
         toast.error("Login failed. Please try again.");
       }
     } catch (err) {
+      console.error(err);
       toast.error("Something went wrong. Please try again.");
     }
   };
@@ -118,6 +160,8 @@ export default function Login({ onSwitch }) {
         background: `linear-gradient(120deg, ${theme.palette.background.default} 0%, #fff 100%)`,
       }}
     >
+      <div id="recaptcha-container"></div>
+
       <form
         className="w-full max-w-sm sm:max-w-md bg-white px-4 sm:px-6 py-5 flex flex-col justify-center relative"
         onSubmit={handleSubmit}
@@ -137,7 +181,12 @@ export default function Login({ onSwitch }) {
           <button
             type="button"
             className="flex items-center justify-center gap-2 w-full py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition font-semibold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            onClick={() => alert("Google login not implemented in this demo.")}
+            onClick={() =>
+              toast.info("Google login not implemented in this demo.", {
+                position: "top-center",
+                transition: Slide,
+              })
+            }
             aria-label="Sign in with Google"
           >
             <FcGoogle className="text-xl" aria-hidden="true" />
@@ -160,14 +209,14 @@ export default function Login({ onSwitch }) {
             className="grid gap-1.5"
           >
             <div className="grid gap-3">
-              {/* Email/Username */}
+              {/* Email/Phone */}
               <div>
                 <label
                   htmlFor="login-email"
                   className="block mb-0.5 text-xs font-semibold"
                   style={{ color: theme.palette.text.primary }}
                 >
-                  Email or Username
+                  Email or Phone
                 </label>
                 <div className="relative">
                   <input
@@ -179,7 +228,7 @@ export default function Login({ onSwitch }) {
                         ? "border-red-400"
                         : "border-gray-300"
                     }`}
-                    placeholder="Email or username"
+                    placeholder="Email or phone number"
                     value={login.emailOrUsername}
                     onChange={handleChange}
                     aria-invalid={!!errors.emailOrUsername}
@@ -273,7 +322,10 @@ export default function Login({ onSwitch }) {
             type="button"
             className="text-xs text-indigo-600 font-semibold underline hover:text-indigo-800 focus:outline-none"
             onClick={() =>
-              alert("Password recovery not implemented in this demo.")
+              toast.info("Password recovery not implemented.", {
+                position: "top-center",
+                transition: Slide,
+              })
             }
           >
             Forgot your password?
@@ -304,6 +356,7 @@ export default function Login({ onSwitch }) {
             Register
           </button>
         </div>
+        <ToastContainer />
       </form>
     </div>
   );

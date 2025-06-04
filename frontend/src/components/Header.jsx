@@ -22,8 +22,9 @@ import {
   Grow,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice"; // Adjust the import path as needed
 import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsActiveRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
@@ -42,7 +43,6 @@ const Header = ({
   toggleSidebarCollapse,
   closeSidebar,
   notificationCount = 0,
-  onLogout,
   onSearch,
   userAvatar = "",
   drawerWidth = 240,
@@ -50,7 +50,8 @@ const Header = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   // Profile menu state
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openProfile = Boolean(anchorEl);
@@ -74,6 +75,11 @@ const Header = ({
       searchInputRef.current.focus();
     }
   }, [mobileSearchOpen]);
+
+  const handleLogout = () => {
+    dispatch(logout()); // Clear Redux state
+    navigate("/login"); // Redirect to login page
+  };
 
   // Header margin/width logic for desktop
   const headerLeftMargin =
@@ -548,7 +554,7 @@ const Header = ({
                   </MenuItem>
                 </>
               )}
-              <MenuItem onClick={onLogout}>
+              <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutRoundedIcon fontSize="small" />
                 </ListItemIcon>

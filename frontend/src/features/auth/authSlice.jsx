@@ -1,39 +1,42 @@
+// src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Async thunk for login
+const api = axios.create({
+  baseURL: "http://localhost:5000",
+  withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Login
 export const login = createAsyncThunk(
   "auth/login",
   async (payload, { rejectWithValue }) => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        payload,
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await api.post("/api/auth/login", payload);
       return res.data;
     } catch (err) {
-      // Capture both error and next step
-      const data = err.response?.data || {};
       return rejectWithValue({
-        error: data.error || err.message || "Login failed",
-        next: data.next || null, // capture `next`
+        error: err.response?.data?.error || err.message || "Login failed",
+        next: err.response?.data?.next || null,
       });
     }
   }
 );
 
-// Async thunk for register
+// Register
 export const register = createAsyncThunk(
   "auth/register",
   async (payload, { rejectWithValue }) => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        payload
-      );
+      const res = await api.post("/api/auth/register", payload);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -41,16 +44,12 @@ export const register = createAsyncThunk(
   }
 );
 
-// Async thunk for OTP verify
+// Verify OTP
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async (idToken, { rejectWithValue }) => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/otp",
-        { idToken },
-        { withCredentials: true }
-      );
+      const res = await api.post("/api/auth/otp", { idToken });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -58,14 +57,17 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
-export const resendOtp = createAsyncThunk(
-  "auth/resendOtp",
+// Refresh User Info (after onboarding or status change)
+export const refreshUser = createAsyncThunk(
+  "auth/refreshUser",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.post("/api/auth/resend-otp");
-      return response.data;
+      const res = await api.get("/api/auth/me");
+      return res.data.user;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to resend OTP");
+      return rejectWithValue(
+        err.response?.data?.error || "Failed to fetch user"
+      );
     }
   }
 );
@@ -93,6 +95,9 @@ const authSlice = createSlice({
       state.registerStatus = null;
       state.tempUser = null;
       state.error = null;
+      localStorage.removeItem("token");
+      localStorage.removeItem("providerId");
+      localStorage.removeItem("user");
     },
     setTempUser(state, action) {
       state.tempUser = action.payload;
@@ -111,8 +116,14 @@ const authSlice = createSlice({
         state.role = action.payload.user?.role || null;
         state.verified = !!action.payload.user?.isOtpVerified;
         state.error = null;
+        if (action.payload.token) {
+          localStorage.setItem("token", action.payload.token);
+        }
+        if (action.payload.user?.providerId) {
+          localStorage.setItem("providerId", action.payload.user.providerId);
+        }
+        localStorage.setItem("user", JSON.stringify(action.payload.user));
       })
-
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -142,8 +153,27 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.role = action.payload.user?.role || null;
         state.error = null;
+        if (action.payload.token) {
+          localStorage.setItem("token", action.payload.token);
+        }
+        if (action.payload.user?.providerId) {
+          localStorage.setItem("providerId", action.payload.user.providerId);
+        }
+        localStorage.setItem("user", JSON.stringify(action.payload.user));
       })
       .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(refreshUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(refreshUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(refreshUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
