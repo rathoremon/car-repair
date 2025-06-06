@@ -58,7 +58,7 @@ const Onboarding = () => {
 
   return (
     <Box
-      className="h-[20%] p-8 flex items-center justify-center px-4"
+      className="min-h-screen  flex items-center justify-center p-4"
       sx={{
         background: backgroundGradient,
       }}
@@ -69,8 +69,8 @@ const Onboarding = () => {
           width: {
             xs: "100%",
             sm: "90%",
-            md: "620px", // 👈 Optimized width
-            lg: "1320px",
+            md: "920px", // 👈 Optimized width
+            lg: "1120px",
           },
           display: "flex",
           justifyContent: "center",

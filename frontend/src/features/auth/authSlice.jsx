@@ -60,18 +60,23 @@ export const verifyOtp = createAsyncThunk(
 // Refresh User Info (after onboarding or status change)
 export const refreshUser = createAsyncThunk(
   "auth/refreshUser",
-  async (_, { rejectWithValue }) => {
+  async (_, thunkAPI) => {
     try {
-      const res = await api.get("/api/auth/me");
-      return res.data.user;
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.error || "Failed to fetch user"
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      const response = await api.get("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
       );
     }
   }
 );
-
 const initialState = {
   user: null,
   token: null,
@@ -167,15 +172,17 @@ const authSlice = createSlice({
       })
       .addCase(refreshUser.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(refreshUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.user = action.payload.user;
+        state.verified = action.payload.user.isOtpVerified;
       })
-      .addCase(refreshUser.rejected, (state, action) => {
+      .addCase(refreshUser.rejected, (state) => {
         state.loading = false;
-        state.error = action.payload;
+        state.token = null; // <- IMPORTANT
+        state.user = null;
+        state.verified = false;
       });
   },
 });

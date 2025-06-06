@@ -11,15 +11,15 @@ const AppLayout = ({
   children,
   sidebarOpen,
   sidebarWidth = 240,
+  enableStickyHeader = false,
+  mainContainerProps = {},
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
-  // Sidebar collapse state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  // Sidebar width logic
+  // Calculate Sidebar Width
   const effectiveSidebarWidth =
     isMobile || !sidebarOpen
       ? 0
@@ -27,11 +27,17 @@ const AppLayout = ({
       ? MINI_SIDEBAR_WIDTH
       : sidebarWidth;
 
-  // Expert-level background: subtle gradient, blurred SVG, and overlay
-  const backgroundGradient = `linear-gradient(120deg, ${alpha(
-    theme.palette.primary.light,
-    0.12
-  )} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`;
+  // Optimized SVG Background as base64
+  const backgroundGradient =
+    theme.palette.mode === "dark"
+      ? `linear-gradient(120deg, ${alpha(
+          theme.palette.primary.dark,
+          0.2
+        )} 0%, ${alpha(theme.palette.secondary.dark, 0.15)} 100%)`
+      : `linear-gradient(120deg, ${alpha(
+          theme.palette.primary.light,
+          0.12
+        )} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`;
 
   const svgBg = encodeURIComponent(`
     <svg width="600" height="600" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,38 +62,13 @@ const AppLayout = ({
         drawerWidth: sidebarWidth,
         sidebarOpen,
         sidebarCollapsed,
+        enableStickyHeader,
       })}
       <Box
         sx={{
           display: "flex",
           width: "100%",
-          minHeight: "100vh",
-          position: "relative",
-          overflow: "hidden",
-          "&::before": {
-            content: '""',
-            position: "fixed",
-            zIndex: 0,
-            inset: 0,
-            width: "100vw",
-            height: "100vh",
-            background: backgroundGradient,
-            backgroundRepeat: "no-repeat",
-            backgroundAttachment: "fixed",
-          },
-          "&::after": {
-            content: '""',
-            position: "fixed",
-            zIndex: 0,
-            inset: 0,
-            width: "100vw",
-            height: "100vh",
-            background: `url("data:image/svg+xml,${svgBg}") center/cover no-repeat`,
-            opacity: 0.7,
-            pointerEvents: "none",
-            filter: "blur(2px)",
-            backgroundAttachment: "fixed",
-          },
+          bgcolor: "background.default",
         }}
       >
         {React.cloneElement(SidebarComponent, {
@@ -98,34 +79,30 @@ const AppLayout = ({
         })}
         <Box
           component="main"
+          role="main"
           sx={{
-            flex: 1,
+            flexGrow: 1,
             display: "flex",
             flexDirection: "column",
-            pt: { xs: 7, sm: 8 },
-            minHeight: "100vh",
-            bgcolor: "transparent",
-            px: { xs: 1, sm: 3 },
-            transition: `margin-left ${theme.transitions.duration.short}ms`,
+            pt: { xs: 6, sm: enableStickyHeader ? 10 : 7.5 },
+            transition: `margin-left ${theme.transitions.duration.short}ms ease-in-out`,
             ml: isDesktop ? `${effectiveSidebarWidth}px` : 0,
             width: "100%",
-            overflowX: "hidden",
-            overflowY: "auto",
-            position: "relative",
             zIndex: 1,
+            WebkitOverflowScrolling: "touch", // smooth scroll
+            willChange: "transform", // hint GPU acceleration
+            scrollBehavior: "smooth", // smooth native scrolling
+            ...mainContainerProps,
           }}
         >
           <Box
             sx={{
-              borderRadius: theme.shape.borderRadiusLg,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
               boxShadow: theme.shadows[4],
-              bgcolor: "background.paper",
-              p: { xs: 2, sm: 3 },
-              minHeight: "calc(100vh - 64px)",
-              mt: 2,
-              zIndex: 2,
-              position: "relative",
-              backdropFilter: "blur(0.5px)",
+              bgcolor: "background.paper", // ensure footer space if added
+              p: { xs: 0, sm: 0 },
             }}
           >
             {children}

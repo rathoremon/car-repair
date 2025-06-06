@@ -242,35 +242,52 @@ export default function VehicleFormBlock({
               onChange={(_, value) => value && onChange(idx, "fuelType", value)}
               aria-label="Fuel Type"
               size="medium"
-              className="flex flex-wrap justify-center sm:justify-start"
+              className="flex flex-wrap gap-4 justify-center"
               sx={{
                 "& .MuiToggleButton-root": {
-                  flex: "1 1 100px",
+                  flex: "0 0 auto",
+                  width: { xs: "140px", sm: "160px" }, // fixed button width for all screen sizes
+                  height: "48px",
                   margin: "4px",
-                  borderRadius: 9999,
+                  borderRadius: "9999px",
                   textTransform: "capitalize",
-                  border: "1px solid #e0e0e0",
                   fontWeight: 600,
+                  fontSize: "1rem",
+                  border: "1px solid #e0e0e0",
+                  letterSpacing: "0.5px",
+                  transition: "all 0.3s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  "& svg": {
+                    marginRight: "8px",
+                    fontSize: "1.2rem",
+                  },
                   "&.Mui-selected": {
                     bgcolor: "primary.main",
                     color: "#fff",
+                    boxShadow: "0 4px 10px rgba(99,102,241,0.3)",
+                    borderColor: "primary.main",
                   },
                   "&:hover": {
                     backgroundColor: "primary.light",
                     color: "#fff",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 12px rgba(99,102,241,0.2)",
                   },
                 },
               }}
             >
               {fuelTypes.map((type) => (
                 <ToggleButton key={type.label} value={type.label}>
-                  <Box className="flex items-center gap-1">
+                  <Box className="flex items-center gap-2">
                     {type.icon}
                     {type.label}
                   </Box>
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>
+
             {errors.fuelType && (
               <Typography
                 color="error"

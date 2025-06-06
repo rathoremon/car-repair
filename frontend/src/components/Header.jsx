@@ -93,7 +93,7 @@ const Header = ({
       ? sidebarCollapsed
         ? `calc(100vw - ${MINI_SIDEBAR_WIDTH}px)`
         : `calc(100vw - ${drawerWidth}px)`
-      : "100vw";
+      : "%";
 
   const badgeSx = {
     "& .MuiBadge-badge": {
@@ -114,15 +114,15 @@ const Header = ({
     <Slide in direction="down">
       <AppBar
         position="fixed"
-        elevation={2}
+        elevation={0}
         sx={{
-          bgcolor: theme.palette.primary.main,
-          color: theme.palette.primary.contrastText,
+          background: "linear-gradient(to right, #4f46e5, #3b82f6, #6366f1)", // Gradient background
+          color: "#F9FAFB",
           zIndex: theme.zIndex.drawer + 1,
           px: { xs: 0, sm: 2 },
           height: { xs: 56, sm: 64, md: 64 },
           justifyContent: "center",
-          boxShadow: theme.shadows[2],
+          boxShadow: "none",
           transition: `margin-left ${theme.transitions.duration.standard}ms, width ${theme.transitions.duration.standard}ms`,
           ml: headerLeftMargin,
           width: headerWidth,

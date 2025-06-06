@@ -1,24 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 // Auth & Onboarding
 import AuthPage from "./pages/auth/AuthPage";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Onboarding from "./pages/onboarding/Onboarding";
-
+import { refreshUser } from "./features/auth/authSlice";
 // Layout
 import AppLayout from "./components/AppLayout.jsx";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 
 // Customer pages (only those that exist)
-import Home from "./pages/customer/Home";
+import Home from "./pages/customer/Home.jsx";
 import AppointmentBooking from "./pages/customer/AppointmentBooking";
 import ServiceHistory from "./pages/customer/ServiceHistory";
 import BNPLPage from "./pages/customer/BNPL";
@@ -56,17 +56,36 @@ import BNPLApproval from "./pages/admin/BNPLApproval";
 import ReminderViewer from "./pages/admin/ReminderViewer";
 import FeedbackAnalytics from "./pages/admin/FeedbackAnalytics";
 import ChatTranscriptAnalyzer from "./pages/admin/ChatTranscriptAnalyzer";
-
+import { CircularProgress } from "@mui/material";
 // RoleGate and ProtectedRoute
 import { RoleGate } from "./utils/roleGate";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Main App
 export default function App() {
+  const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Use Redux for role, user, token, verified status
-  const { role, user, token, verified } = useSelector((state) => state.auth);
+  const { role, user, token, verified, loading } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    const localToken = localStorage.getItem("token");
+    if (localToken && !user) {
+      dispatch(refreshUser());
+    }
+  }, [dispatch, user]);
+
+  // 🚩 Corrected loading screen logic
+  if (token && (!user || loading)) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <CircularProgress size={50} color="primary" />
+      </div>
+    );
+  }
 
   // Dynamic header title based on role
   const headerTitle =

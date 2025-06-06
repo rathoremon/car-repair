@@ -40,7 +40,12 @@ const Sidebar = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const navItems = SIDEBAR_CONFIG[userType] || [];
-  const effectiveDrawerWidth = collapsed ? MINI_SIDEBAR_WIDTH : drawerWidth;
+  const effectiveDrawerWidth = isMobile
+    ? drawerWidth
+    : collapsed
+    ? MINI_SIDEBAR_WIDTH
+    : drawerWidth;
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -227,7 +232,7 @@ const Sidebar = ({
             return (
               <Tooltip
                 key={item.text}
-                title={collapsed ? item.text : ""}
+                title={collapsed && !isMobile ? item.text : ""}
                 placement="right"
                 arrow
                 enterDelay={300}
@@ -239,7 +244,7 @@ const Sidebar = ({
                     if (isMobile && onClose) onClose();
                   }}
                   sx={{
-                    mx: collapsed ? 0.5 : 1.2,
+                    mx: collapsed && !isMobile ? 0.5 : 1.2,
                     my: 0.5,
                     minHeight: 44,
                     bgcolor: selected
@@ -254,8 +259,9 @@ const Sidebar = ({
                       ? "0 2px 8px 0 rgba(0,0,0,0.09)"
                       : "none",
                     position: "relative",
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    px: collapsed ? 0.5 : 2,
+                    justifyContent:
+                      collapsed && !isMobile ? "center" : "flex-start",
+                    px: collapsed && !isMobile ? 0.5 : 2,
                     borderRadius: "1px",
                   }}
                 >
@@ -271,7 +277,7 @@ const Sidebar = ({
                   >
                     {React.createElement(item.icon)}
                   </ListItemIcon>
-                  {!collapsed && (
+                  {(!collapsed || isMobile) && (
                     <ListItemText
                       disableTypography
                       primary={item.text}

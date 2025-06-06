@@ -9,6 +9,7 @@ import {
   HiOutlineExclamationCircle,
   HiOutlineArrowLeft,
 } from "react-icons/hi";
+
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +42,6 @@ export default function Login({ onSwitch }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading } = useSelector((state) => state.auth);
-
   const [login, setLogin] = useState({ emailOrUsername: "", password: "" });
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
@@ -106,13 +106,24 @@ export default function Login({ onSwitch }) {
       payload.password = login.password;
 
       const resultAction = await dispatch(loginThunk(payload));
-
       const { user, next } = resultAction.payload || {};
 
+      if (!user) {
+        toast.error("Login failed. Please try again.");
+        return;
+      }
+
+      // 👉 Admin: No OTP, Direct login
+      if (user.role === "admin") {
+        toast.success(`Welcome back, Admin!`);
+        navigate("/admin/dashboard");
+        return;
+      }
+
+      // Customer/Provider Logic
       if (next === "verify-otp") {
-        // 🔐 Trigger Firebase OTP
         await setupRecaptcha();
-        const appVerifier = recaptchaVerifierRef.current;
+        const appVerifier = window.recaptchaVerifier; // ✅ Corrected
         const phoneNumber = user.phone;
 
         const confirmationResult = await signInWithPhoneNumber(
@@ -129,20 +140,16 @@ export default function Login({ onSwitch }) {
         navigate("/onboarding");
       } else if (user) {
         toast.success(`Welcome back, ${user.name || "User"}!`);
-
-        // ✅ Auto-redirect based on onboardingComplete and role
         if (user.onboardingComplete) {
           if (user.role === "provider") {
             navigate("/provider/dashboard");
           } else if (user.role === "customer") {
             navigate("/customer/home");
-          } else if (user.role === "admin") {
-            navigate("/admin/dashboard");
           } else {
-            navigate("/"); // fallback, if some unknown role
+            navigate("/");
           }
         } else {
-          navigate("/onboarding"); // fallback, if onboarding not complete
+          navigate("/onboarding");
         }
       } else {
         toast.error("Login failed. Please try again.");

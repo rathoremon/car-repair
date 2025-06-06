@@ -4,8 +4,10 @@ import {
   setVehicles,
   setVehicleStepComplete,
   setStep,
+  markOnboardingComplete,
   createVehicles,
 } from "../../../features/onboarding/onboardingSlice";
+import { refreshUser } from "../../../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography, Skeleton, Fade } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
@@ -86,7 +88,9 @@ export default function CustomerVehicleOnboarding() {
     return errs;
   };
 
-  const handleNext = async () => {
+  const refreshStatus = useSelector((state) => state.auth.refreshStatus);
+
+  const handleRegisterVehicle = async () => {
     const newErrors = localVehicles.map(validateVehicle);
     setErrors(newErrors);
     const firstErrorIndex = newErrors.findIndex((e) => Object.keys(e).length);
@@ -103,22 +107,15 @@ export default function CustomerVehicleOnboarding() {
     }
 
     try {
-      await dispatch(createVehicles(localVehicles)).unwrap(); // ⬅️ backend save
+      await dispatch(createVehicles(localVehicles)).unwrap();
+      dispatch(setVehicles(localVehicles));
+      await dispatch(markOnboardingComplete()).unwrap();
+      await dispatch(refreshUser()).unwrap();
 
-      dispatch(setVehicles(localVehicles)); // optional, to sync local redux
-      dispatch(setVehicleStepComplete(true));
       toast.success("Vehicle details saved!", {
         position: "top-center",
         autoClose: 2000,
       });
-
-      setTimeout(() => {
-        if (user?.role === "customer") {
-          navigate("/customer/home");
-        } else {
-          navigate("/");
-        }
-      }, 1200);
     } catch (error) {
       console.error("Error saving vehicles:", error);
       toast.error(error || "Failed to save vehicles", {
@@ -128,17 +125,37 @@ export default function CustomerVehicleOnboarding() {
     }
   };
 
+  // ⬇️ New Effect to Navigate after refreshUser success
+  useEffect(() => {
+    if (refreshStatus === "succeeded") {
+      if (user?.role === "customer") {
+        navigate("/customer/home", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [refreshStatus, user, navigate]);
+
   const handleSkip = () => {
     dispatch(setVehicleStepComplete(false));
     dispatch(setStep(1));
     toast.info("Skipping vehicle details...", {
       position: "bottom-center",
-      autoClose: 2000,
+      autoClose: 1500,
     });
+
+    setTimeout(() => {
+      toast.dismiss(); // dismiss toast
+      if (user?.role === "customer") {
+        navigate("/customer/home");
+      } else {
+        navigate("/");
+      }
+    }, 800);
   };
 
   return (
-    <Box className="w-full flex flex-col min-h-screen bg-[#f9fbff]">
+    <Box className="w-full flex flex-col min-h-[60vh] bg-[#f9fbff]">
       {/* Progress */}
 
       {/* Main Content */}
@@ -215,10 +232,10 @@ export default function CustomerVehicleOnboarding() {
           <Button
             variant="contained"
             color="primary"
-            onClick={handleNext}
+            onClick={handleRegisterVehicle}
             className="flex-1 rounded-full text-lg font-semibold py-3 transition-all hover:shadow-xl"
           >
-            Next
+            Register Vehicle
           </Button>
           <Button
             variant="text"
