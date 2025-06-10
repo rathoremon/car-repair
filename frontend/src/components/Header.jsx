@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice"; // Adjust the import path as needed
 import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsActiveRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -50,6 +50,7 @@ const Header = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const role = useSelector((state) => state.auth.role);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   // Profile menu state
@@ -75,6 +76,17 @@ const Header = ({
       searchInputRef.current.focus();
     }
   }, [mobileSearchOpen]);
+
+  const handleGoToProfile = () => {
+    handleProfileClose();
+    if (role === "admin") {
+      navigate("/admin/profile"); // Or admin dashboard if no profile yet
+    } else if (role === "provider") {
+      navigate("/provider/profile"); // Or provider dashboard if no profile yet
+    } else {
+      navigate("/customer/profile"); // Default customer
+    }
+  };
 
   const handleLogout = () => {
     dispatch(logout()); // Clear Redux state
@@ -517,7 +529,9 @@ const Header = ({
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem>
+              <MenuItem onClick={handleGoToProfile}>
+                {" "}
+                {/* Add this onClick handler */}
                 <ListItemIcon>
                   <PersonRoundedIcon fontSize="small" />
                 </ListItemIcon>

@@ -1,6 +1,7 @@
 import React from "react";
+import { useTheme } from "@mui/material/styles";
 import HeroSection from "../../components/Home/HeroSection";
-import ServiceCategoriesGrid from "../../components/Home/ServiceCategoriesGrid";
+import QuickActionsGrid from "../../components/Home/QuickActionsGrid"; // Service Categories
 import ServiceHighlights from "../../components/Home/ServiceHighlights"; // Why Choose Us
 import HowItWorks from "../../components/Home/HowItWorks"; // Journey
 import TrustFactors from "../../components/Home/TrustFactors"; // Why Trust Trasure
@@ -8,8 +9,34 @@ import TestimonialsCarousel from "../../components/Home/TestimonialsCarousel"; /
 import BlogSnippets from "../../components/Home/BlogSnippets"; // Blog Tips
 import GetStartedCTA from "../../components/Home/GetStartedCTA"; // Final Call to Action
 import StickyMobileCTA from "../../components/Home/StickyMobileCTA"; // Mobile CTA
+import ActiveServiceTile from "../../components/Home/ActiveServiceTile";
 
+const activeService = {
+  isActive: true,
+  type: "Tyre Replacement",
+  mechanicName: "Rajesh Kumar",
+  mechanicAvatar: "https://i.pravatar.cc/150?img=12", // Random avatar
+  eta: 12, // minutes
+  distance: 2.5, // km
+  status: "En Route", // Could be "On-Site", "Work Started", "Completed"
+  vehicle: "Tesla Model 3",
+  onTrack: () => alert("Opening Live Track..."),
+  onChat: () => alert("Opening Chat..."),
+  onCancel: () => alert("Cancelling Service..."),
+};
+
+const noActiveService = {
+  isActive: false,
+  lastService: {
+    type: "Oil Change",
+    cost: 3500,
+    date: "2 months ago",
+    vehicle: "Hyundai i20",
+  },
+  onRebook: () => alert("Rebooking Last Service..."),
+};
 const Home = () => {
+  const theme = useTheme();
   return (
     <main
       className="font-sans bg-[#f0f4ff] min-h-screen transition-colors duration-300"
@@ -17,21 +44,29 @@ const Home = () => {
       role="main"
     >
       {/* Hero Section */}
-      <section
-        aria-label="Hero Section"
-        className="w-full relative overflow-hidden"
-        role="region"
-      >
+      <section aria-label="Hero Section" className="w-full " role="region">
         <HeroSection />
       </section>
-      {/* Service Categories */}
-      <section
-        aria-label="Service Categories"
-        className="mx-auto"
-        role="region"
+      <div
+        style={{
+          background:
+            theme.palette.mode === "dark"
+              ? "linear-gradient(135deg, #111827, #1f2937)"
+              : "linear-gradient(135deg, #f9fafb, #e5e7eb)",
+
+          padding: "4rem 0",
+        }}
       >
-        <ServiceCategoriesGrid />
-      </section>
+        <section className="mx-auto ">
+          <QuickActionsGrid />
+        </section>
+
+        <section className="mx-auto ">
+          <ActiveServiceTile service={activeService} />
+          {/* <ActiveServiceTile service={noActiveService} /> */}
+        </section>
+      </div>
+
       {/* Why Choose Trasure (Highlights) */}
       <section
         aria-label="Why Choose Trasure"

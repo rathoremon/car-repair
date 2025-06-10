@@ -5,18 +5,20 @@ import { motion } from "framer-motion";
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const userName = "Pravesh"; // Dynamic user
+  const carModel = "Honda Accord"; // Dynamic car
 
   return (
     <section
       aria-label="Hero Section"
       role="region"
-      className="relative flex flex-col items-center justify-center min-h-[70vh] overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-500 to-indigo-700 px-6 sm:px-10 md:px-16"
+      className="relative flex flex-col items-center justify-center min-h-[95vh] overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-500 to-indigo-700 px-6 sm:px-10 md:px-16"
     >
       {/* Background Blurred Shapes */}
       <div className="absolute inset-0 pointer-events-none select-none -z-10">
         <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-16 right-24 w-96 h-96 bg-blue-200/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-white/5 rounded-full blur-[180px] -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-1/2 left-1/2 w-[500px] h-[400px] bg-white/5 rounded-full blur-[180px] -translate-x-1/2 -translate-y-1/2" />
       </div>
 
       {/* Hero Content */}
@@ -24,16 +26,43 @@ const HeroSection = () => {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 flex flex-col items-center text-center w-full max-w-6xl mx-auto pt-14"
+        className="relative z-10 flex flex-col items-center text-center w-full max-w-6xl mx-auto pt-0"
       >
-        {/* Badge */}
+        {/* Advanced Greeting */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
-          className="inline-block mb-2 px-5 py-2 bg-white/20 rounded-full text-white text-sm sm:text-base font-semibold backdrop-blur-sm shadow-md"
+          className="w-full max-w-2xl mb-4 px-6  sm:px-8 py-8 sm:py-2 rounded-3xl backdrop-blur-md shadow-2xl border border-white/10 bg-gradient-to-r from-white/10 via-white/5 to-white/10 hover:from-white/20 hover:to-white/10 transition-all duration-500 mb-16 sm:mb-0"
         >
-          ⭐️ Rated 4.9/5 by 10,000+ Car Owners
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-white gap-3">
+            {/* Greeting Info */}
+            <div className="text-center sm:text-left">
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-xl md:text-2xl lg:text-[1.5rem] font-bold tracking-wide text-white drop-shadow-lg"
+              >
+                👋 Hello, <span className="text-yellow-300">{userName}</span>
+              </motion.p>
+              <p className="mt-2 text-base md:text-md lg:text-[0.5] font-light text-blue-100">
+                <span className="text-[1.5rem]">🚗</span> {carModel} • Next
+                Service in{" "}
+                <span className="font-semibold text-yellow-200">5 Days</span>
+              </p>
+            </div>
+
+            {/* CTA Button */}
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/customer/book-service")}
+              className="inline-flex items-center justify-center px-8 py-[12px] rounded-full bg-yellow-400 text-indigo-900 font-bold text-base md:text-lg shadow-xl hover:shadow-2xl hover:bg-yellow-300 transition-all duration-300"
+            >
+              Book Now →
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* Title */}
@@ -56,7 +85,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
-          className="mt-8 text-blue-100 font-light leading-relaxed"
+          className="mt-6 text-blue-100 font-light leading-relaxed"
           style={{
             fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
             maxWidth: "42ch",
@@ -77,9 +106,9 @@ const HeroSection = () => {
           }}
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate("/customer/book-service")}
-          className="relative overflow-hidden inline-flex items-center gap-3 px-8 py-3 sm:px-10 sm:py-4 rounded-full bg-gray-200 text-gray-900 font-bold shadow-md hover:shadow-lg transition-all duration-300 text-base sm:text-lg md:text-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 active:scale-95 mt-8"
+          className="relative overflow-hidden inline-flex items-center gap-3 px-8 py-5 sm:px-10 sm:py-3 rounded-full bg-gray-200 text-gray-900 font-bold shadow-md hover:shadow-lg transition-all duration-300 text-base sm:text-lg md:text-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 active:scale-95 my-8"
         >
-          <DirectionsCarIcon className="text-gray-900 text-2xl" />
+          <DirectionsCarIcon className="text-gray-900 text-xl" />
           Book a Service
         </motion.button>
 
@@ -92,10 +121,10 @@ const HeroSection = () => {
             duration: 1.8,
             ease: "easeInOut",
           }}
-          className="mt-[40px] flex justify-center"
+          className="mt-8 flex justify-center lg:mt-1  sm:bottom-8 sm:left-1/2 sm:-translate-x-1/2"
         >
           <div
-            className="w-6 h-10 border-2 border-white rounded-full flex justify-center items-start p-1 relative"
+            className="w-7 h-12 sm:w-5 sm:h-9 border-2 border-white rounded-full flex justify-center items-start p-1 relative"
             aria-hidden="true"
           >
             <div className="w-2 h-2 bg-white rounded-full animate-scrollDot" />

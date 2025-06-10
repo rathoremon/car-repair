@@ -19,6 +19,8 @@ import Sidebar from "./components/Sidebar";
 
 // Customer pages (only those that exist)
 import Home from "./pages/customer/Home.jsx";
+import Profile from "./pages/customer/Profile.jsx";
+import Vehicle from "./pages/customer/VehicleDashboard.jsx";
 import AppointmentBooking from "./pages/customer/AppointmentBooking";
 import ServiceHistory from "./pages/customer/ServiceHistory";
 import BNPLPage from "./pages/customer/BNPL";
@@ -138,8 +140,8 @@ export default function App() {
                 >
                   <Routes>
                     <Route path="home" element={<Home />} />
-                    {/* <Route path="profile" element={null} /> // Not implemented */}
-                    {/* <Route path="vehicles" element={null} /> // Not implemented */}
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="vehicles" element={<Vehicle />} />
                     <Route path="bnpl" element={<BNPLPage />} />
                     <Route path="fleet" element={<FleetManagement />} />
                     {/* <Route path="service-request" element={null} /> // Not implemented */}
