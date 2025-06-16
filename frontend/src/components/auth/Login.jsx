@@ -14,7 +14,7 @@ import { FcGoogle } from "react-icons/fc";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer, Slide } from "react-toastify";
-import { login as loginThunk } from "../../features/auth/authSlice";
+import { login as loginThunk } from "../../features/auth/authThunks";
 import "react-toastify/dist/ReactToastify.css";
 import { auth } from "../../firebase"; // Import Firebase auth
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";

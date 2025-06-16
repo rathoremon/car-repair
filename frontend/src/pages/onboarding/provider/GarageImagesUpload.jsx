@@ -16,9 +16,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   uploadGarageImages,
   removeGarageImage,
-  setGarageImagesProgress,
-  setOnboardingError,
-} from "../../../features/onboarding/onboardingSlice";
+} from "../../../features/onboarding/onboardingThunks";
+import { setOnboardingError } from "../../../features/onboarding/onboardingSlice";
 
 const RECOMMENDED_ANGLES = [
   "Front View",

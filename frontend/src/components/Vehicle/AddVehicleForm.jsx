@@ -123,6 +123,7 @@ const AddVehicleForm = ({ open, handleClose, handleSave, initialData }) => {
         transmissionOilChangeDate: formatDate(
           initialData.transmissionOilChangeDate
         ),
+
         insuranceReminderDate: formatDate(initialData.insuranceReminderDate),
         pucReminderDate: formatDate(initialData.pucReminderDate),
         nextServiceReminderDate: formatDate(

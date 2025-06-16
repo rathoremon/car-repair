@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  createVehicles,
+  markOnboardingComplete,
+} from "../../../features/onboarding/onboardingThunks";
+import {
   setVehicles,
   setVehicleStepComplete,
   setStep,
-  markOnboardingComplete,
-  createVehicles,
 } from "../../../features/onboarding/onboardingSlice";
-import { refreshUser } from "../../../features/auth/authSlice";
+import { refreshUser } from "../../../features/auth/authThunks";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography, Skeleton, Fade } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";

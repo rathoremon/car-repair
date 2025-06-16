@@ -14,7 +14,7 @@ import {
 } from "react-icons/hi";
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch, useSelector } from "react-redux";
-import { register as registerThunk } from "../../features/auth/authSlice";
+import { register as registerThunk } from "../../features/auth/authThunks";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

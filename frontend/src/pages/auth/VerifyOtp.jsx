@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyOtp } from "../../features/auth/authSlice";
+import { verifyOtp } from "../../features/auth/authThunks";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, ErrorOutline, Refresh } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";

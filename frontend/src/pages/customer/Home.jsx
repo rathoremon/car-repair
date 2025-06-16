@@ -10,7 +10,7 @@ import BlogSnippets from "../../components/Home/BlogSnippets"; // Blog Tips
 import GetStartedCTA from "../../components/Home/GetStartedCTA"; // Final Call to Action
 import StickyMobileCTA from "../../components/Home/StickyMobileCTA"; // Mobile CTA
 import ActiveServiceTile from "../../components/Home/ActiveServiceTile";
-
+import BannerCarousel from "../../components/Home/BannerCarousel"; // Carousel for promotions
 const activeService = {
   isActive: true,
   type: "Tyre Replacement",
@@ -47,6 +47,11 @@ const Home = () => {
       <section aria-label="Hero Section" className="w-full " role="region">
         <HeroSection />
       </section>
+
+      <section aria-label="Promotions" className="w-full" role="region">
+        <BannerCarousel />
+      </section>
+
       <div
         style={{
           background:

@@ -1,13 +1,13 @@
 // src/components/onboarding/provider/ProviderGarageOnboarding.jsx
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { setGarage } from "../../../features/onboarding/onboardingSlice";
 import {
-  setGarage,
   uploadProviderDocs,
   saveProviderGeneralDetails,
   markOnboardingComplete, // ✅ Import new thunk here
-} from "../../../features/onboarding/onboardingSlice";
-import { refreshUser } from "../../../features/auth/authSlice";
+} from "../../../features/onboarding/onboardingThunks";
+import { refreshUser } from "../../../features/auth/authThunks";
 import {
   Box,
   Button,

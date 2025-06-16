@@ -1,82 +1,6 @@
-// src/features/auth/authSlice.js
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice } from "@reduxjs/toolkit";
+import { login, register, verifyOtp, refreshUser } from "./authThunks";
 
-const api = axios.create({
-  baseURL: "http://localhost:5000",
-  withCredentials: true,
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Login
-export const login = createAsyncThunk(
-  "auth/login",
-  async (payload, { rejectWithValue }) => {
-    try {
-      const res = await api.post("/api/auth/login", payload);
-      return res.data;
-    } catch (err) {
-      return rejectWithValue({
-        error: err.response?.data?.error || err.message || "Login failed",
-        next: err.response?.data?.next || null,
-      });
-    }
-  }
-);
-
-// Register
-export const register = createAsyncThunk(
-  "auth/register",
-  async (payload, { rejectWithValue }) => {
-    try {
-      const res = await api.post("/api/auth/register", payload);
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
-    }
-  }
-);
-
-// Verify OTP
-export const verifyOtp = createAsyncThunk(
-  "auth/verifyOtp",
-  async (idToken, { rejectWithValue }) => {
-    try {
-      const res = await api.post("/api/auth/otp", { idToken });
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
-    }
-  }
-);
-
-// Refresh User Info (after onboarding or status change)
-export const refreshUser = createAsyncThunk(
-  "auth/refreshUser",
-  async (_, thunkAPI) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-
-      const response = await api.get("/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      return response.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
-      );
-    }
-  }
-);
 const initialState = {
   user: null,
   token: null,
@@ -110,6 +34,7 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -121,6 +46,7 @@ const authSlice = createSlice({
         state.role = action.payload.user?.role || null;
         state.verified = !!action.payload.user?.isOtpVerified;
         state.error = null;
+
         if (action.payload.token) {
           localStorage.setItem("token", action.payload.token);
         }
@@ -133,6 +59,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Register
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -147,6 +75,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Verify OTP
       .addCase(verifyOtp.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -158,6 +88,7 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.role = action.payload.user?.role || null;
         state.error = null;
+
         if (action.payload.token) {
           localStorage.setItem("token", action.payload.token);
         }
@@ -170,6 +101,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Refresh User
       .addCase(refreshUser.pending, (state) => {
         state.loading = true;
       })
@@ -180,7 +113,7 @@ const authSlice = createSlice({
       })
       .addCase(refreshUser.rejected, (state) => {
         state.loading = false;
-        state.token = null; // <- IMPORTANT
+        state.token = null;
         state.user = null;
         state.verified = false;
       });

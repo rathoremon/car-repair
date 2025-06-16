@@ -7,49 +7,10 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
-  Container,
 } from "@mui/material";
 import AddVehicleForm from "../../components/Vehicle/AddVehicleForm";
 import VehicleCard from "../../components/Vehicle/VehicleCard";
 import EmptyState from "../../components/Vehicle/EmptyState";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-
-const theme = createTheme({
-  typography: {
-    h4: {
-      fontWeight: 700,
-      fontSize: "2.5rem",
-      color: "#1976d2", // A vibrant blue
-      textShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)", // Subtle shadow for depth
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: "8px",
-          padding: "12px 24px",
-          fontWeight: 600,
-          "&:hover": {
-            backgroundColor: "#1565c0", // Darker shade on hover
-          },
-        },
-        outlined: {
-          border: "2px dashed #1976d2",
-          color: "#1976d2",
-        },
-      },
-    },
-    MuiDialog: {
-      styleOverrides: {
-        paper: {
-          borderRadius: "12px",
-          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-        },
-      },
-    },
-  },
-});
 
 const VehicleDashboard = () => {
   const [vehicles, setVehicles] = useState([
@@ -126,83 +87,76 @@ const VehicleDashboard = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box
-        className="min-h-screen p-8"
-        sx={{
-          //   backgroundImage:
-          //    "url(https://i.ibb.co/vzVz335/geometric-background-pattern-blue-white.png)", // Replace with your image URL
-          background: "linear-gradient(45deg, #e0f7fa 30%, #b2ebf2 90%)",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundAttachment: "fixed",
-        }}
+    <Box className="min-h-screen p-8 bg-gray-50">
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        textAlign="center"
+        mb={8}
+        className="text-blue-700"
       >
-        <Container maxWidth="lg">
-          <Typography variant="h4" textAlign="center" mb={8}>
-            🚗 Trasure Vehicle Manager
-          </Typography>
+        🚗 Trasure Vehicle Manager
+      </Typography>
 
-          {vehicles.length === 0 ? (
-            <EmptyState onAddVehicle={() => setOpenForm(true)} />
-          ) : (
-            <Stack spacing={4} className="mx-auto">
-              {vehicles.map((vehicle) => (
-                <VehicleCard
-                  key={vehicle.id}
-                  vehicle={vehicle}
-                  onEdit={(v) => {
-                    setEditVehicle(v);
-                    setOpenForm(true);
-                  }}
-                  onDelete={(v) => setDeleteVehicle(v)}
-                  isExpanded={expandedCardId === vehicle.id}
-                  onExpand={() =>
-                    setExpandedCardId((prevId) =>
-                      prevId === vehicle.id ? null : vehicle.id
-                    )
-                  }
-                />
-              ))}
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={() => setOpenForm(true)}
-              >
-                + Add Another Vehicle
-              </Button>
-            </Stack>
-          )}
-
-          <AddVehicleForm
-            open={openForm}
-            handleClose={() => {
-              setEditVehicle(null);
-              setOpenForm(false);
-            }}
-            handleSave={handleSaveVehicle}
-            initialData={editVehicle}
-          />
-
-          <Dialog
-            open={Boolean(deleteVehicle)}
-            onClose={() => setDeleteVehicle(null)}
+      {vehicles.length === 0 ? (
+        <EmptyState onAddVehicle={() => setOpenForm(true)} />
+      ) : (
+        <Stack spacing={4} className="max-w-5xl mx-auto">
+          {vehicles.map((vehicle) => (
+            <VehicleCard
+              key={vehicle.id}
+              vehicle={vehicle}
+              onEdit={(v) => {
+                setEditVehicle(v);
+                setOpenForm(true);
+              }}
+              onDelete={(v) => setDeleteVehicle(v)}
+              isExpanded={expandedCardId === vehicle.id}
+              onExpand={() =>
+                setExpandedCardId((prevId) =>
+                  prevId === vehicle.id ? null : vehicle.id
+                )
+              }
+            />
+          ))}
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => setOpenForm(true)}
+            className="border-dashed border-2 border-blue-500 text-blue-500 hover:bg-blue-50 transition"
           >
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogActions>
-              <Button onClick={() => setDeleteVehicle(null)}>Cancel</Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDeleteVehicle}
-              >
-                Delete
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Container>
-      </Box>
-    </ThemeProvider>
+            + Add Another Vehicle
+          </Button>
+        </Stack>
+      )}
+
+      <AddVehicleForm
+        open={openForm}
+        handleClose={() => {
+          setEditVehicle(null);
+          setOpenForm(false);
+        }}
+        handleSave={handleSaveVehicle}
+        initialData={editVehicle}
+      />
+
+      <Dialog
+        open={Boolean(deleteVehicle)}
+        onClose={() => setDeleteVehicle(null)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setDeleteVehicle(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteVehicle}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

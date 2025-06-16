@@ -1,47 +1,54 @@
 import React from "react";
-import { Box, Paper, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 
-export default function Container({
+/**
+ * Admin container block with smart padding, responsive width, and clear visual hierarchy.
+ * Cleanly wraps all Admin pages and sections.
+ */
+const Container = ({
   children,
-  maxWidth = 950,
-  gradient = true,
-}) {
+  maxWidth = "1440px",
+  spacing = true,
+  sectioned = false,
+  withBorder = false,
+  overflowHidden = false,
+}) => {
   const theme = useTheme();
 
   return (
     <Box
+      component="main"
+      role="main"
       sx={{
-        maxWidth,
-        mx: "auto",
-        mt: 6,
-        mb: 4,
+        width: "100%",
+        minHeight: "100vh",
+        backgroundColor: "#f8f9fb", // neutral soft background
+        paddingTop: { xs: 2, md: 4 },
+        paddingBottom: { xs: 4, md: 6 },
+        px: spacing ? { xs: 2, sm: 3, md: 6 } : 0,
+        overflowX: "hidden",
       }}
     >
-      <Paper
-        elevation={4} // use 1, 2, 3, or 4 (not 6)
+      <Box
         sx={{
-          p: { xs: 2, sm: 4 },
-          bgcolor: "background.paper",
-          borderRadius: 5,
-          boxShadow: 4, // match elevation
-          overflow: "hidden",
-          position: "relative",
-          animation: "fadeIn 0.7s",
+          maxWidth,
+          mx: "auto",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: sectioned ? 6 : 0,
+          border: withBorder ? `1px solid ${theme.palette.divider}` : "none",
+          borderRadius: withBorder ? 3 : 0,
+          backgroundColor: withBorder ? "#fff" : "transparent",
+          overflow: overflowHidden ? "hidden" : "initial",
+          boxShadow: withBorder ? "0px 1px 2px rgba(16, 24, 40, 0.05)" : "none",
+          transition: "all 0.3s ease-in-out",
         }}
       >
-        {gradient && (
-          <Box
-            sx={{
-              height: 8,
-              width: "100%",
-              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              mb: 3,
-              borderRadius: "0 0 12px 12px",
-            }}
-          />
-        )}
         {children}
-      </Paper>
+      </Box>
     </Box>
   );
-}
+};
+
+export default Container;

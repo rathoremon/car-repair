@@ -5,6 +5,8 @@ import providerReducer from "../features/provider/providerSlice";
 import mechanicReducer from "../features/mechanic/mechanicSlice";
 import adminReducer from "../features/admin/adminSlice";
 import onboardingReducer from "../features/onboarding/onboardingSlice";
+import serviceCategoryReducer from "../features/serviceCategory/serviceCategorySlice";
+import promotionReducer from "../features/promotion/promotionSlice";
 import uiReducer from "../features/ui/uiSlice";
 
 const rootReducer = combineReducers({
@@ -14,6 +16,8 @@ const rootReducer = combineReducers({
   mechanic: mechanicReducer,
   admin: adminReducer,
   onboarding: onboardingReducer,
+  serviceCategory: serviceCategoryReducer,
+  promotion: promotionReducer,
   ui: uiReducer,
 });
 

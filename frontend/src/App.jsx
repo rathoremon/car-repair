@@ -11,7 +11,7 @@ import { useSelector, useDispatch } from "react-redux";
 import AuthPage from "./pages/auth/AuthPage";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Onboarding from "./pages/onboarding/Onboarding";
-import { refreshUser } from "./features/auth/authSlice";
+import { refreshUser } from "./features/auth/authThunks";
 // Layout
 import AppLayout from "./components/AppLayout.jsx";
 import Header from "./components/Header";
@@ -45,7 +45,7 @@ import ServiceCategoryMgmt from "./pages/admin/ServiceCategoryMgmt";
 import OrdersPanel from "./pages/admin/OrdersPanel";
 import DisputeResolution from "./pages/admin/DisputeResolution";
 import ReportsAnalytics from "./pages/admin/ReportsAnalytics";
-import PromoCampaignForm from "./pages/admin/PromoCampaignForm";
+import PromoCampaignForm from "./pages/admin/Promotion.jsx";
 import CrossSellManager from "./pages/admin/CrossSellManager";
 import NotificationPanel from "./pages/admin/NotificationPanel";
 import RBACManager from "./pages/admin/RBACManager";

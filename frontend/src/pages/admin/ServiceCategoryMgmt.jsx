@@ -1,146 +1,114 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  Typography,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Paper,
   Box,
-  useTheme,
-  Fade,
-  Stack,
+  Grid,
+  Typography,
+  IconButton,
+  Tooltip,
+  Divider,
+  Paper,
+  CircularProgress,
 } from "@mui/material";
-import { Delete } from "@mui/icons-material";
-import Container from "../../components/Container";
-export default function ServiceCategoryMgmt() {
-  const [categories, setCategories] = useState(["Towing", "Battery Jumpstart"]);
-  const [newCategory, setNewCategory] = useState("");
-  const theme = useTheme();
+import { Refresh, CloudDownload } from "@mui/icons-material";
+import { fetchServiceCategories } from "../../features/serviceCategory/serviceCategoryThunks";
+import ServiceCategorySearchBar from "../../components/Service/ServiceCategorySearchBar";
+import ServiceCategoryForm from "../../components/Service/ServiceCategoryForm";
+import ServiceCategoryList from "../../components/Service/ServiceCategoryList";
+import { toast } from "react-toastify";
 
-  const addCategory = () => {
-    if (newCategory.trim()) {
-      setCategories([...categories, newCategory.trim()]);
-      setNewCategory("");
+const ServiceCategoryMgmt = () => {
+  const dispatch = useDispatch();
+  const { searchTerm, filterStatus } = useSelector(
+    (state) => state.serviceCategory
+  );
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await dispatch(
+        fetchServiceCategories({ search: searchTerm, status: filterStatus })
+      );
+      toast.success("Refreshed successfully");
+    } catch {
+      toast.error("Failed to refresh");
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  const deleteCategory = (i) => {
-    setCategories(categories.filter((_, idx) => idx !== i));
-  };
+  useEffect(() => {
+    dispatch(
+      fetchServiceCategories({ search: searchTerm, status: filterStatus })
+    );
+  }, [dispatch, searchTerm, filterStatus]);
 
   return (
-    <Container>
-      <Fade in timeout={600}>
-        <Box>
-          <Typography
-            variant="h4"
-            color="primary"
-            fontWeight={700}
-            gutterBottom
-            sx={{ letterSpacing: 1 }}
-          >
-            Service Categories
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-            Add or remove service categories for your platform.
-          </Typography>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mb: 2 }}
-          >
-            <TextField
-              label="New Category"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              fullWidth
-              size="small"
-              sx={{
-                bgcolor: "background.paper",
-                borderRadius: 2,
-              }}
-            />
-            <Button
-              onClick={addCategory}
-              variant="contained"
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        py: { xs: 2, md: 6 },
+        px: { xs: 1, sm: 3, md: 8 },
+        transition: "background 0.5s",
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          p: { xs: 2, md: 6 },
+          borderRadius: 0.5,
+          boxShadow: 4,
+          bgcolor: "background.paper",
+        }}
+      >
+        <Grid container alignItems="center" spacing={2} mb={2}>
+          <Grid item xs>
+            <Typography
+              variant="h4"
+              fontWeight={700}
               color="primary"
-              sx={{
-                minWidth: 140,
-                fontWeight: 600,
-                borderRadius: 2,
-                boxShadow: "none",
-                textTransform: "none",
-              }}
+              gutterBottom
             >
-              Add Category
-            </Button>
-          </Stack>
-          <List
-            sx={{
-              mt: 2,
-              bgcolor: theme.palette.custom.sidebarBg,
-              borderRadius: 3,
-              boxShadow: theme.shadows[1],
-              px: 1,
-              py: 1,
-              minHeight: 120,
-            }}
-          >
-            {categories.length === 0 ? (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ textAlign: "center", py: 3 }}
-              >
-                No categories yet. Add your first category!
-              </Typography>
-            ) : (
-              categories.map((cat, i) => (
-                <ListItem
-                  key={i}
-                  secondaryAction={
-                    <IconButton
-                      onClick={() => deleteCategory(i)}
-                      color="error"
-                      sx={{
-                        bgcolor: theme.palette.error.light,
-                        color: theme.palette.error.contrastText,
-                        borderRadius: 2,
-                        "&:hover": {
-                          bgcolor: theme.palette.error.main,
-                          color: "#fff",
-                        },
-                      }}
-                    >
-                      <Delete />
-                    </IconButton>
-                  }
-                  sx={{
-                    mb: 1,
-                    borderRadius: 2,
-                    bgcolor: "background.paper",
-                    boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: theme.palette.action.hover,
-                    },
-                  }}
+              Service Category Management
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage your platform's service categories efficiently.
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Tooltip title="Refresh">
+              <span>
+                <IconButton
+                  color="secondary"
+                  size="large"
+                  onClick={handleRefresh}
+                  disabled={refreshing}
                 >
-                  <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        {cat}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              ))
-            )}
-          </List>
-        </Box>
-      </Fade>
-    </Container>
+                  {refreshing ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    <Refresh />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 6 }} />
+
+        <ServiceCategoryForm />
+
+        <ServiceCategorySearchBar />
+
+        <ServiceCategoryList />
+      </Paper>
+    </Box>
   );
-}
+};
+
+export default ServiceCategoryMgmt;
