@@ -1,12 +1,9 @@
-// features/promotion/promotionThunks.js
-
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import api from "../../utils/axios"; // Ensure this points to the axios.create({ baseURL }) setup
+import api from "../../utils/axios";
 
-// Admin route prefix
 const BASE = "/api/admin/promotion";
+const ACTIVE = `/api/promotion`;
 
-// Fetch all banners (admin)
 export const fetchAllPromotions = createAsyncThunk(
   "promotion/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -21,12 +18,11 @@ export const fetchAllPromotions = createAsyncThunk(
   }
 );
 
-// Fetch active banners (public, no auth required)
 export const fetchActivePromotions = createAsyncThunk(
   "promotion/fetchActive",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get(`${BASE}/active`);
+      const res = await api.get(`${ACTIVE}/active`);
       return res.data.data;
     } catch (err) {
       return rejectWithValue(
@@ -36,7 +32,6 @@ export const fetchActivePromotions = createAsyncThunk(
   }
 );
 
-// Create new banner
 export const createPromotion = createAsyncThunk(
   "promotion/create",
   async (promotionData, { rejectWithValue }) => {
@@ -51,7 +46,6 @@ export const createPromotion = createAsyncThunk(
   }
 );
 
-// Delete a banner
 export const deletePromotion = createAsyncThunk(
   "promotion/delete",
   async (id, { rejectWithValue }) => {
@@ -66,7 +60,6 @@ export const deletePromotion = createAsyncThunk(
   }
 );
 
-// Optional: Update banner
 export const updatePromotion = createAsyncThunk(
   "promotion/update",
   async ({ id, data }, { rejectWithValue }) => {

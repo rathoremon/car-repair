@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../utils/axios";
+import { setGarageImagesProgress } from "./onboardingSlice";
 
 // Save provider general details (step 1)
 export const saveProviderGeneralDetails = createAsyncThunk(
@@ -19,6 +20,27 @@ export const saveProviderGeneralDetails = createAsyncThunk(
   }
 );
 
+export const saveBankDetails = createAsyncThunk(
+  "onboarding/saveBankDetails",
+  async (bankDetails, { rejectWithValue }) => {
+    try {
+      const providerId = localStorage.getItem("providerId");
+      if (!providerId) throw new Error("Provider ID not found");
+
+      const res = await api.put(`/api/provider/${providerId}`, {
+        ...bankDetails,
+      });
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.error ||
+          err.message ||
+          "Failed to save bank details"
+      );
+    }
+  }
+);
+
 // Upload garage images
 export const uploadGarageImages = createAsyncThunk(
   "onboarding/uploadGarageImages",
@@ -30,7 +52,7 @@ export const uploadGarageImages = createAsyncThunk(
     formData.append("type", "garage_image");
 
     try {
-      const res = await api.post("/api/documents/upload-multiple", formData, {
+      const res = await api.post("/api/document/upload-multiple", formData, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (e) => {
           const progress = Math.round((e.loaded * 100) / e.total);
@@ -52,7 +74,7 @@ export const removeGarageImage = createAsyncThunk(
   "onboarding/removeGarageImage",
   async (docId, { rejectWithValue }) => {
     try {
-      await api.delete(`/api/documents/${docId}`);
+      await api.delete(`/api/document/${docId}`);
       return docId;
     } catch (err) {
       return rejectWithValue(
@@ -68,7 +90,6 @@ export const createVehicles = createAsyncThunk(
   async (vehicles, { rejectWithValue }) => {
     try {
       const responses = [];
-
       for (const vehicle of vehicles) {
         const res = await api.post("/api/vehicles", vehicle);
         responses.push(res.data.data);
@@ -83,7 +104,7 @@ export const createVehicles = createAsyncThunk(
   }
 );
 
-// Upload provider documents
+// Upload provider document
 export const uploadProviderDocs = createAsyncThunk(
   "onboarding/uploadProviderDocs",
   async ({ docs }, { rejectWithValue }) => {
@@ -94,7 +115,7 @@ export const uploadProviderDocs = createAsyncThunk(
         const formData = new FormData();
         formData.append("file", doc);
         formData.append("type", type);
-        const res = await api.post("/api/documents/upload-single", formData, {
+        const res = await api.post("/api/document/upload-single", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         return res.data.data;
@@ -127,6 +148,23 @@ export const markOnboardingComplete = createAsyncThunk(
         err.response?.data?.error ||
           err.message ||
           "Failed to mark onboarding complete"
+      );
+    }
+  }
+);
+
+// Admin Reset Provider Onboarding (on rejection)
+export const resetProviderOnboarding = createAsyncThunk(
+  "onboarding/resetProviderOnboarding",
+  async (providerId, { rejectWithValue }) => {
+    try {
+      const res = await api.delete(
+        `/api/provider/${providerId}/onboarding-reset`
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.error || err.message || "Failed to reset onboarding"
       );
     }
   }

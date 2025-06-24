@@ -4,6 +4,7 @@ import {
   removeGarageImage,
   createVehicles,
   markOnboardingComplete,
+  saveBankDetails,
 } from "./onboardingThunks";
 
 const initialState = {
@@ -13,7 +14,23 @@ const initialState = {
   providerStepComplete: false,
   providerDocs: [],
   vehicles: [],
-  garage: { name: "", address: "" },
+  garage: {
+    name: "",
+    address: "",
+    categories: [],
+    serviceArea: [],
+    location: {},
+    workingHours: {},
+    availability: [],
+  },
+  bankDetails: {
+    accountHolderName: "",
+    accountNumber: "",
+    ifscCode: "",
+    bankName: "",
+    branchName: "",
+    upiId: "",
+  },
   error: null,
   upload: {
     uploading: false,
@@ -51,15 +68,43 @@ const onboardingSlice = createSlice({
     setGarage: (state, action) => {
       state.garage = { ...state.garage, ...action.payload };
     },
+    setBankDetails: (state, action) => {
+      state.bankDetails = { ...state.bankDetails, ...action.payload };
+    },
     setOnboardingError: (state, action) => {
       state.error = action.payload;
     },
     clearOnboarding: () => initialState,
+
     setGarageImagesProgress: (state, action) => {
       state.garageImagesProgress = action.payload;
     },
     clearGarageImagesProgress: (state) => {
       state.garageImagesProgress = 0;
+    },
+
+    // ✅ NEW: Reset onboarding on KYC rejection
+    clearProviderOnboarding: (state) => {
+      state.providerDocs = [];
+      state.garage = {
+        name: "",
+        address: "",
+        categories: [],
+        serviceArea: [],
+        location: {},
+        workingHours: {},
+        availability: [],
+      };
+      state.bankDetails = {
+        accountHolderName: "",
+        accountNumber: "",
+        ifscCode: "",
+        bankName: "",
+        branchName: "",
+        upiId: "",
+      };
+      state.error = null;
+      state.garageImages = [];
     },
   },
   extraReducers: (builder) => {
@@ -84,30 +129,14 @@ const onboardingSlice = createSlice({
           (img) => img.id !== action.payload
         );
       })
-      .addCase(removeGarageImage.rejected, (state, action) => {
-        state.garageImagesError = action.payload;
-      })
-      .addCase(createVehicles.pending, (state) => {
-        state.upload.uploading = true;
-      })
       .addCase(createVehicles.fulfilled, (state, action) => {
-        state.upload.uploading = false;
         state.vehicles = action.payload;
       })
-      .addCase(createVehicles.rejected, (state, action) => {
-        state.upload.uploading = false;
-        state.error = action.payload;
-      })
-      .addCase(markOnboardingComplete.pending, (state) => {
-        state.upload.uploading = true;
+      .addCase(saveBankDetails.fulfilled, (state, action) => {
+        state.bankDetails = action.payload;
       })
       .addCase(markOnboardingComplete.fulfilled, (state) => {
-        state.upload.uploading = false;
         state.completed = true;
-      })
-      .addCase(markOnboardingComplete.rejected, (state, action) => {
-        state.upload.uploading = false;
-        state.upload.error = action.payload;
       });
   },
 });
@@ -120,8 +149,10 @@ export const {
   setProviderDocs,
   setVehicles,
   setGarage,
+  setBankDetails,
   setOnboardingError,
   clearOnboarding,
+  clearProviderOnboarding, // ✅ export this for use in reset flow
   setGarageImagesProgress,
   clearGarageImagesProgress,
 } = onboardingSlice.actions;

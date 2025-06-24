@@ -1,3 +1,4 @@
+// ✅ Full App.jsx with Provider KYC Access Enforcement
 import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -12,12 +13,13 @@ import AuthPage from "./pages/auth/AuthPage";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Onboarding from "./pages/onboarding/Onboarding";
 import { refreshUser } from "./features/auth/authThunks";
-// Layout
+
+// Layout Components
 import AppLayout from "./components/AppLayout.jsx";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 
-// Customer pages (only those that exist)
+// Customer Pages
 import Home from "./pages/customer/Home.jsx";
 import Profile from "./pages/customer/Profile.jsx";
 import Vehicle from "./pages/customer/VehicleDashboard.jsx";
@@ -30,14 +32,15 @@ import ReminderPanel from "./pages/customer/Reminders";
 import SOSPage from "./pages/customer/SOS";
 import FleetManagement from "./pages/customer/FleetManagement";
 
-// Provider pages (only those that exist)
+// Provider Pages
 import ProviderDashboard from "./pages/provider/Dashboard";
 import ProviderRequests from "./pages/provider/Assignments";
 import ProviderOffers from "./pages/provider/OfferManagement";
 import PayoutsDashboard from "./pages/provider/PayoutDashboard";
 import AvailabilitySchedule from "./pages/provider/AvailabilitySchedule";
+import ProviderLocked from "./pages/provider/ProviderLocked"; // ⛔ New
 
-// Admin pages (only those that exist)
+// Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import ProviderManagement from "./pages/admin/ProviderManagement";
@@ -58,21 +61,19 @@ import BNPLApproval from "./pages/admin/BNPLApproval";
 import ReminderViewer from "./pages/admin/ReminderViewer";
 import FeedbackAnalytics from "./pages/admin/FeedbackAnalytics";
 import ChatTranscriptAnalyzer from "./pages/admin/ChatTranscriptAnalyzer";
+
+// Access Control & Routing
 import { CircularProgress } from "@mui/material";
-// RoleGate and ProtectedRoute
 import { RoleGate } from "./utils/roleGate";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import { ProviderAccessGuard } from "./hooks/useProviderAccessGuard";
 
-// Main App
 export default function App() {
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { role, user, token, loading } = useSelector((state) => state.auth);
 
-  // Use Redux for role, user, token, verified status
-  const { role, user, token, verified, loading } = useSelector(
-    (state) => state.auth
-  );
-
+  // Load user on token detection
   useEffect(() => {
     const localToken = localStorage.getItem("token");
     if (localToken && !user) {
@@ -80,7 +81,7 @@ export default function App() {
     }
   }, [dispatch, user]);
 
-  // 🚩 Corrected loading screen logic
+  // Show loading spinner while fetching user details
   if (token && (!user || loading)) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -89,7 +90,7 @@ export default function App() {
     );
   }
 
-  // Dynamic header title based on role
+  // Dynamic header title per role
   const headerTitle =
     role === "admin"
       ? "Trasure Admin"
@@ -100,13 +101,13 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Auth routes */}
+        {/* Public Auth Routes */}
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Onboarding route (gated) */}
+        {/* Onboarding Flow */}
         <Route
           path="/onboarding"
           element={
@@ -116,7 +117,7 @@ export default function App() {
           }
         />
 
-        {/* Customer routes */}
+        {/* Customer Routes */}
         <Route
           path="/customer/*"
           element={
@@ -144,7 +145,6 @@ export default function App() {
                     <Route path="vehicles" element={<Vehicle />} />
                     <Route path="bnpl" element={<BNPLPage />} />
                     <Route path="fleet" element={<FleetManagement />} />
-                    {/* <Route path="service-request" element={null} /> // Not implemented */}
                     <Route
                       path="appointments"
                       element={<AppointmentBooking />}
@@ -154,11 +154,12 @@ export default function App() {
                       path="service-history"
                       element={<ServiceHistory />}
                     />
-                    {/* <Route path="notifications" element={null} /> // Not implemented */}
                     <Route path="reminders" element={<ReminderPanel />} />
                     <Route path="chat" element={<ChatPanel />} />
-                    {/* <Route path="payments" element={null} /> // Not implemented */}
                     <Route path="sos" element={<SOSPage />} />
+                    {/* <Route path="service-request" element={null} /> */}
+                    {/* <Route path="notifications" element={null} /> */}
+                    {/* <Route path="payments" element={null} /> */}
                     <Route
                       path="*"
                       element={<Navigate to="/customer/home" replace />}
@@ -170,64 +171,67 @@ export default function App() {
           }
         />
 
-        {/* Provider routes */}
+        {/* Provider Routes (KYC Guarded) */}
         <Route
           path="/provider/*"
           element={
             <ProtectedRoute requireOnboarding>
               <RoleGate allowed={["provider"]}>
-                <AppLayout
-                  HeaderComponent={
-                    <Header
-                      sidebarOpen={sidebarOpen}
-                      toggleSidebar={() => setSidebarOpen(true)}
-                      title={headerTitle}
-                    />
-                  }
-                  SidebarComponent={
-                    <Sidebar
-                      userType="provider"
-                      open={sidebarOpen}
-                      onClose={() => setSidebarOpen(false)}
-                    />
-                  }
-                  sidebarOpen={sidebarOpen}
-                >
-                  <Routes>
-                    <Route path="dashboard" element={<ProviderDashboard />} />
-                    {/* <Route path="kyc" element={null} /Not implemented */}
-                    {/* <Route path="profile" element={null} /Not implemented */}
-                    {/* <Route path="pricing" element={null} /> // Not implemented */}
-                    <Route
-                      path="availability"
-                      element={<AvailabilitySchedule />}
-                    />
-                    {/* <Route path="tier-plans" element={null} /> // Not implemented */}
-                    <Route path="offers" element={<ProviderOffers />} />
-                    {/* <Route path="mechanics" element={null} /> // Not implemented */}
-                    {/* <Route path="mechanics/new" element={null} /> // Not implemented */}
-                    {/* <Route path="inventory" element={null} /> // Not implemented */}
-                    {/* <Route path="inventory/new" element={null} /> // Not implemented */}
-                    <Route path="assignments" element={<ProviderRequests />} />
-                    {/* <Route path="work-status" element={null} /> // Not implemented */}
-                    {/* <Route path="earnings" element={null} /> // Not implemented */}
-                    <Route path="payouts" element={<PayoutsDashboard />} />
-                    {/* <Route path="feedback" element={null} /> // Not implemented */}
-                    {/* <Route path="sla" element={null} /> // Not implemented */}
-                    {/* <Route path="chat" element={null} /> // Not implemented */}
-                    {/* <Route path="invoices" element={null} /> // Not implemented */}
-                    <Route
-                      path="*"
-                      element={<Navigate to="/provider/dashboard" replace />}
-                    />
-                  </Routes>
-                </AppLayout>
+                <ProviderAccessGuard>
+                  <AppLayout
+                    HeaderComponent={
+                      <Header
+                        sidebarOpen={sidebarOpen}
+                        toggleSidebar={() => setSidebarOpen(true)}
+                        title={headerTitle}
+                      />
+                    }
+                    SidebarComponent={
+                      <Sidebar
+                        userType="provider"
+                        open={sidebarOpen}
+                        onClose={() => setSidebarOpen(false)}
+                      />
+                    }
+                    sidebarOpen={sidebarOpen}
+                  >
+                    <Routes>
+                      <Route path="dashboard" element={<ProviderDashboard />} />
+                      <Route
+                        path="availability"
+                        element={<AvailabilitySchedule />}
+                      />
+                      <Route path="offers" element={<ProviderOffers />} />
+                      <Route
+                        path="assignments"
+                        element={<ProviderRequests />}
+                      />
+                      <Route path="payouts" element={<PayoutsDashboard />} />
+                      <Route path="locked" element={<ProviderLocked />} />
+                      {/* <Route path="kyc" element={null} /> */}
+                      {/* <Route path="profile" element={null} /> */}
+                      {/* <Route path="pricing" element={null} /> */}
+                      {/* <Route path="tier-plans" element={null} /> */}
+                      {/* <Route path="mechanics" element={null} /> */}
+                      {/* <Route path="inventory" element={null} /> */}
+                      {/* <Route path="chat" element={null} /> */}
+                      {/* <Route path="invoices" element={null} /> */}
+                      {/* <Route path="sla" element={null} /> */}
+                      {/* <Route path="feedback" element={null} /> */}
+                      {/* <Route path="earnings" element={null} /> */}
+                      <Route
+                        path="*"
+                        element={<Navigate to="/provider/dashboard" replace />}
+                      />
+                    </Routes>
+                  </AppLayout>
+                </ProviderAccessGuard>
               </RoleGate>
             </ProtectedRoute>
           }
         />
 
-        {/* Admin routes */}
+        {/* Admin Routes */}
         <Route
           path="/admin/*"
           element={
@@ -300,7 +304,7 @@ export default function App() {
           }
         />
 
-        {/* Default: redirect to role-based dashboard */}
+        {/* Fallback: Role-based Redirect */}
         <Route
           path="*"
           element={

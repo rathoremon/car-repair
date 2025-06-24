@@ -54,6 +54,9 @@ const serviceCategorySlice = createSlice({
     setSortDir(state, action) {
       state.sortDir = action.payload;
     },
+    setProviderTableParams: (state, action) => {
+      state.params = { ...state.params, ...action.payload };
+    },
   },
   extraReducers: (builder) => {
     builder

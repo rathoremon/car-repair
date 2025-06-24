@@ -1,11 +1,10 @@
-// features/promotion/promotionSlice.js
-
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchAllPromotions,
   fetchActivePromotions,
   createPromotion,
   deletePromotion,
+  updatePromotion,
 } from "./promotionThunks";
 
 const initialState = {
@@ -37,6 +36,11 @@ const promotionSlice = createSlice({
       })
       .addCase(createPromotion.fulfilled, (state, action) => {
         state.banners.unshift(action.payload);
+      })
+      .addCase(updatePromotion.fulfilled, (state, action) => {
+        state.banners = state.banners.map((b) =>
+          b.id === action.payload.id ? action.payload : b
+        );
       })
       .addCase(deletePromotion.fulfilled, (state, action) => {
         state.banners = state.banners.filter((b) => b.id !== action.payload);

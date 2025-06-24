@@ -1,233 +1,132 @@
-import React from "react";
+// src/pages/admin/ProviderManagement.jsx
+import React, { useState } from "react";
+import { Box, Typography, CircularProgress } from "@mui/material";
+import ProviderTable from "../../components/admin/ProviderManagement/ProviderTable";
+import ProviderPopup from "../../components/admin/ProviderManagement/ProviderPopup";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
 import {
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  Chip,
-  Box,
-  Avatar,
-  InputBase,
-  useTheme,
-  Stack,
-  Fade,
-} from "@mui/material";
-import Container from "../../components/Container";
+  approveProvider,
+  rejectProviderAndReset,
+} from "../../features/provider/providerThunks";
+import { DomainVerification, ErrorOutline } from "@mui/icons-material";
 
-import SearchIcon from "@mui/icons-material/Search";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+const ProviderManagement = () => {
+  const dispatch = useDispatch();
+  const [selectedProvider, setSelectedProvider] = useState(null);
 
-const providers = [
-  { id: 1, name: "SpeedFix", tier: "Gold", kycStatus: "Pending" },
-  { id: 2, name: "QuickAuto", tier: "Silver", kycStatus: "Approved" },
-  { id: 3, name: "PlatinumWheels", tier: "Platinum", kycStatus: "Approved" },
-];
+  const handleApprove = async (id) => {
+    try {
+      await dispatch(approveProvider(id)).unwrap();
+      toast.success("Provider approved.", { autoClose: 2600 });
+      setSelectedProvider(null);
+    } catch (err) {
+      toast.error(
+        typeof err === "string" ? err : "Failed to approve provider."
+      );
+    }
+  };
 
-const tierColor = (tier, theme) => {
-  if (tier === "Platinum") return { bg: "#A3A3A3", color: "#fff" };
-  if (tier === "Gold")
-    return {
-      bg: theme.palette.warning.light,
-      color: theme.palette.warning.contrastText,
-    };
-  if (tier === "Silver")
-    return {
-      bg: theme.palette.info.light,
-      color: theme.palette.info.contrastText,
-    };
-  return { bg: theme.palette.grey[200], color: theme.palette.text.primary };
-};
-
-const kycIcon = (status, theme) =>
-  status === "Approved" ? (
-    <CheckCircleIcon
-      sx={{ color: theme.palette.success.main, fontSize: 18, mr: 0.5 }}
-    />
-  ) : (
-    <HourglassEmptyIcon
-      sx={{ color: theme.palette.warning.main, fontSize: 18, mr: 0.5 }}
-    />
-  );
-
-export default function ProviderManagement() {
-  const theme = useTheme();
+  const handleReject = async (id, reason) => {
+    try {
+      await dispatch(
+        rejectProviderAndReset({ providerId: id, reason })
+      ).unwrap();
+      toast.success("Provider rejected and onboarding reset.", {
+        autoClose: 2900,
+      });
+      setSelectedProvider(null);
+    } catch (err) {
+      toast.error(typeof err === "string" ? err : "Failed to reject provider.");
+    }
+  };
 
   return (
-    <Container>
-      <Fade in timeout={600}>
-        <Box>
-          {/* Gradient header bar */}
-
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 3 }}
-          >
-            <Box>
-              <Typography
-                variant="h4"
-                color="primary"
-                fontWeight={700}
-                gutterBottom
-                sx={{ letterSpacing: 1 }}
-              >
-                Service Providers
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                Manage and review all registered service providers.
-              </Typography>
-            </Box>
-            {/* Search bar (UI only) */}
-            <Box
+    <Box
+      sx={{
+        px: { xs: 1, sm: 3, md: 7 },
+        pt: { xs: 2, sm: 4 },
+        pb: 6,
+        width: "100%",
+        minHeight: "100vh",
+        bgcolor: "#f6f8fc",
+      }}
+    >
+      {/* Sticky page header */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 9,
+          bgcolor: "#f6f8fc",
+          pb: 2,
+          mb: 2.5,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.8,
+            mb: 0.4,
+            mt: 1,
+          }}
+        >
+          <DomainVerification
+            fontSize="large"
+            color="primary"
+            sx={{
+              bgcolor: "#e8f2ff",
+              borderRadius: 1,
+              p: 0.7,
+              mr: 1,
+              boxShadow: "0 1px 6px 0 rgba(30,100,220,0.06)",
+            }}
+          />
+          <Box>
+            <Typography
+              variant="h4"
+              fontWeight={800}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                bgcolor: theme.palette.custom.sidebarBg,
-                borderRadius: 2,
-                px: 2,
-                py: 0.5,
-                boxShadow: 1,
-                minWidth: 220,
+                letterSpacing: 0.2,
+                lineHeight: 1.18,
+                color: "#193057",
+                fontSize: { xs: 26, sm: 32, md: 36 },
+              }}
+              gutterBottom
+            >
+              Provider Management
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                color: "#6a768c",
+                fontSize: { xs: 15, sm: 16 },
+                fontWeight: 400,
+                mb: 0.2,
               }}
             >
-              <SearchIcon color="action" sx={{ mr: 1 }} />
-              <InputBase
-                placeholder="Search providers…"
-                sx={{
-                  fontSize: "1rem",
-                  color: "text.primary",
-                  width: "100%",
-                }}
-                inputProps={{ "aria-label": "search providers" }}
-                disabled
-              />
-            </Box>
-          </Stack>
-          <TableContainer
-            sx={{
-              borderRadius: 3,
-              boxShadow: theme.shadows[1],
-              maxHeight: 420,
-              background: theme.palette.background.paper,
-            }}
-          >
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow
-                  sx={{
-                    "& th": {
-                      fontWeight: 700,
-                      color: theme.palette.text.secondary,
-                      backgroundColor: theme.palette.custom.sidebarBg,
-                      borderBottom: `2px solid ${theme.palette.divider}`,
-                    },
-                  }}
-                >
-                  <TableCell>Provider</TableCell>
-                  <TableCell>Tier</TableCell>
-                  <TableCell>KYC Status</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {providers.map((p) => (
-                  <TableRow
-                    key={p.id}
-                    hover
-                    sx={{
-                      transition: "background 0.2s",
-                      "&:hover": {
-                        backgroundColor: theme.palette.action.hover,
-                      },
-                    }}
-                  >
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={2}>
-                        <Avatar
-                          sx={{
-                            bgcolor: tierColor(p.tier, theme).bg,
-                            color: tierColor(p.tier, theme).color,
-                            fontWeight: 700,
-                            width: 40,
-                            height: 40,
-                            fontSize: "1.1rem",
-                          }}
-                        >
-                          {p.name[0]}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            {p.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            ID: {p.id}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={p.tier}
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          letterSpacing: 0.5,
-                          px: 1.5,
-                          bgcolor: tierColor(p.tier, theme).bg,
-                          color: tierColor(p.tier, theme).color,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" alignItems="center">
-                        {kycIcon(p.kycStatus, theme)}
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color={
-                            p.kycStatus === "Approved"
-                              ? theme.palette.success.main
-                              : theme.palette.warning.main
-                          }
-                        >
-                          {p.kycStatus}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Button
-                        variant="contained"
-                        size="small"
-                        color="primary"
-                        sx={{
-                          borderRadius: 2,
-                          fontWeight: 600,
-                          boxShadow: "none",
-                          textTransform: "none",
-                          px: 2,
-                          py: 0.5,
-                          "&:hover": {
-                            backgroundColor: theme.palette.primary.dark,
-                          },
-                        }}
-                      >
-                        Review
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              Review, verify, or reject provider KYC applications and manage
+              onboarding.
+            </Typography>
+          </Box>
         </Box>
-      </Fade>
-    </Container>
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ mt: 1, px: { xs: 0, md: 1 } }}>
+        <ProviderTable onViewProfile={setSelectedProvider} />
+      </Box>
+
+      <ProviderPopup
+        open={!!selectedProvider}
+        provider={selectedProvider}
+        onClose={() => setSelectedProvider(null)}
+        onApprove={() => handleApprove(selectedProvider?.id)}
+        onReject={(reason) => handleReject(selectedProvider?.id, reason)}
+      />
+    </Box>
   );
-}
+};
+
+export default ProviderManagement;

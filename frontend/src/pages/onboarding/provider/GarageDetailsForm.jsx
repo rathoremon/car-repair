@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   TextField,
@@ -7,8 +7,11 @@ import {
   Autocomplete,
   Stack,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material";
 import RoomIcon from "@mui/icons-material/Room";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchServiceCategories } from "../../../features/serviceCategory/serviceCategoryThunks";
 
 const DAYS = [
   "Monday",
@@ -20,27 +23,62 @@ const DAYS = [
   "Sunday",
 ];
 
-export default function GarageDetailsForm({ garage, errors, onChange }) {
-  // Service Area: Add on blur if not empty
-  const serviceAreaInput = useRef();
+export default function GarageDetailsForm({
+  garage,
+  errors,
+  onChange = () => {},
+}) {
+  const dispatch = useDispatch();
+  const { categories = [], loading } = useSelector(
+    (state) => state.serviceCategory
+  );
 
-  const handleServiceAreaChange = (event, value) => {
-    onChange("serviceArea", value);
-  };
+  const serviceArea = garage?.serviceArea || [];
+  const selectedCategories = garage?.categories || [];
+  const availability = garage?.availability || [];
+  const workingHours = garage?.workingHours || {};
 
-  const handleServiceAreaBlur = (e) => {
-    const val = e.target.value.trim();
-    if (val && !(garage.serviceArea || []).includes(val)) {
-      onChange("serviceArea", [...(garage.serviceArea || []), val]);
+  useEffect(() => {
+    dispatch(fetchServiceCategories());
+  }, [dispatch]);
+
+  const handleServiceAreaKeyDown = (e) => {
+    const input = e.target.value.trim();
+    if (e.key === "Enter" && input) {
+      e.preventDefault();
+      if (!serviceArea.includes(input)) {
+        onChange("serviceArea", [...serviceArea, input]);
+      }
+      setTimeout(() => {
+        if (e.target.value) e.target.value = "";
+      }, 0);
     }
   };
 
-  const handleWorkingHoursChange = (field, value) => {
-    onChange("workingHours", { ...garage.workingHours, [field]: value });
+  const handleServiceAreaDelete = (optionToDelete) => {
+    onChange(
+      "serviceArea",
+      serviceArea.filter((option) => option !== optionToDelete)
+    );
+  };
+
+  const handleCategoryDelete = (optionToDelete) => {
+    onChange(
+      "categories",
+      selectedCategories.filter((option) => option !== optionToDelete)
+    );
+  };
+
+  const handleCategoriesChange = (event, value) => {
+    onChange("categories", value);
   };
 
   const handleAvailabilityChange = (event, value) => {
     onChange("availability", value);
+  };
+
+  const handleWorkingHoursChange = (field, value) => {
+    onChange("workingHours", { ...workingHours, [field]: value });
   };
 
   const handleLocationChange = (e) => {
@@ -70,10 +108,10 @@ export default function GarageDetailsForm({ garage, errors, onChange }) {
 
       <Autocomplete
         multiple
-        freeSolo
-        options={[]}
-        value={garage.serviceArea || []}
-        onChange={handleServiceAreaChange}
+        options={categories.map((cat) => cat.name)}
+        loading={loading}
+        value={selectedCategories}
+        onChange={handleCategoriesChange}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
             <Chip
@@ -82,6 +120,49 @@ export default function GarageDetailsForm({ garage, errors, onChange }) {
               label={option}
               {...getTagProps({ index })}
               key={option}
+              onDelete={() => handleCategoryDelete(option)}
+            />
+          ))
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Select Services Offered"
+            placeholder="e.g. Battery, Tyres, Towing"
+            error={!!errors.categories}
+            helperText={
+              errors.categories || "Choose from admin-defined categories"
+            }
+            fullWidth
+            sx={{ mb: 2 }}
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading ? <CircularProgress size={18} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+      />
+
+      <Autocomplete
+        multiple
+        freeSolo
+        options={[]}
+        value={serviceArea}
+        onChange={(e, value) => onChange("serviceArea", value)}
+        renderTags={(value, getTagProps) =>
+          value.map((option, index) => (
+            <Chip
+              variant="outlined"
+              color="primary"
+              label={option}
+              {...getTagProps({ index })}
+              key={option}
+              onDelete={() => handleServiceAreaDelete(option)}
             />
           ))
         }
@@ -93,8 +174,7 @@ export default function GarageDetailsForm({ garage, errors, onChange }) {
             helperText={errors.serviceArea || "Type and press Enter to add"}
             fullWidth
             sx={{ mb: 2 }}
-            inputRef={serviceAreaInput}
-            onBlur={handleServiceAreaBlur}
+            onKeyDown={handleServiceAreaKeyDown}
             inputProps={{
               ...params.inputProps,
               "aria-label": "Service Areas",
@@ -129,7 +209,7 @@ export default function GarageDetailsForm({ garage, errors, onChange }) {
       <Autocomplete
         multiple
         options={DAYS}
-        value={garage.availability || []}
+        value={availability}
         onChange={handleAvailabilityChange}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
@@ -162,22 +242,20 @@ export default function GarageDetailsForm({ garage, errors, onChange }) {
         <TextField
           label="Opening Time"
           type="time"
-          value={garage.workingHours?.open || ""}
+          value={workingHours.open || ""}
           onChange={(e) => handleWorkingHoursChange("open", e.target.value)}
           error={!!errors.workingHours}
           helperText={errors.workingHours}
           fullWidth
-          sx={{ flex: 1 }}
         />
         <TextField
           label="Closing Time"
           type="time"
-          value={garage.workingHours?.close || ""}
+          value={workingHours.close || ""}
           onChange={(e) => handleWorkingHoursChange("close", e.target.value)}
           error={!!errors.workingHours}
           helperText={errors.workingHours}
           fullWidth
-          sx={{ flex: 1 }}
         />
       </Stack>
     </Box>

@@ -49,17 +49,18 @@ export const refreshUser = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
+      if (!token) throw new Error("No token");
 
-      const response = await api.get("/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get("/api/auth/me");
+      const user = response.data.user;
+
+      if (user?.role === "provider" && user?.kycStatus === "rejected") {
+        window.location.href = "/onboarding";
+      }
 
       return response.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
-      );
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );

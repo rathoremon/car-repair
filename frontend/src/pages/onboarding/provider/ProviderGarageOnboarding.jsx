@@ -1,53 +1,45 @@
-// src/components/onboarding/provider/ProviderGarageOnboarding.jsx
-import React, { useState } from "react";
+// 📁 src/components/onboarding/provider/ProviderGarageOnboarding.jsx
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setGarage } from "../../../features/onboarding/onboardingSlice";
+import { useNavigate } from "react-router-dom";
 import {
   uploadProviderDocs,
   saveProviderGeneralDetails,
-  markOnboardingComplete, // ✅ Import new thunk here
+  saveBankDetails,
+  markOnboardingComplete,
 } from "../../../features/onboarding/onboardingThunks";
 import { refreshUser } from "../../../features/auth/authThunks";
+import { setGarage } from "../../../features/onboarding/onboardingSlice";
 import {
   Box,
   Button,
   Typography,
-  Divider,
   Stepper,
   Step,
   StepLabel,
-  Checkbox,
-  FormControlLabel,
+  Divider,
   Grid,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
+import { toast, ToastContainer } from "react-toastify";
 import ProgressBar from "../shared/ProgressBar";
 import GarageDetailsForm from "./GarageDetailsForm";
-import FileUploadZone from "../shared/FileUploadZone";
 import GarageImagesUpload from "./GarageImagesUpload";
-import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import FileUploadZone from "../shared/FileUploadZone";
+import BankDetailsForm from "./BankDetailsForm";
 
-const STEPS = ["General Details", "Garage Images & Documents"];
+const STEPS = ["Garage Details", "Images & Documents", "Bank Details"];
 
 export default function ProviderGarageOnboarding() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const garage = useSelector((state) => state.onboarding.garage);
+  const user = useSelector((state) => state.auth.user);
   const uploadState = useSelector((state) => state.onboarding.upload);
   const garageImages = useSelector((state) => state.onboarding.garageImages);
-  const garageImagesUploading = useSelector(
-    (state) => state.onboarding.garageImagesUploading
-  );
-  const user = useSelector((state) => state.auth.user);
 
   const [step, setStepLocal] = useState(0);
-  const [localGarage, setLocalGarage] = useState({
-    ...garage,
-    serviceAreas: garage.serviceAreas || [],
-    categories: garage.categories || [],
-    radius: garage.radius || 5,
-  });
   const [errors, setErrors] = useState({});
   const [docs, setDocs] = useState({
     license: null,
@@ -55,107 +47,73 @@ export default function ProviderGarageOnboarding() {
     id_proof: null,
   });
   const [agreement, setAgreement] = useState(false);
+  const [bankDetails, setBankDetails] = useState({
+    accountHolderName: "",
+    accountNumber: "",
+    ifscCode: "",
+    bankName: "",
+    branchName: "",
+    upiId: "",
+  });
 
-  const handleChange = (field, value) => {
-    setLocalGarage((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  const validateStep3 = () => {
+    const err = {};
+    if (!bankDetails.accountHolderName) err.accountHolderName = "Required";
+    if (!bankDetails.accountNumber.match(/^\d{9,18}$/))
+      err.accountNumber = "Invalid number";
+    if (!bankDetails.ifscCode.match(/^[A-Z]{4}0[A-Z0-9]{6}$/))
+      err.ifscCode = "Invalid IFSC";
+    if (!bankDetails.bankName) err.bankName = "Required";
+    if (!bankDetails.branchName) err.branchName = "Required";
+    return err;
   };
 
-  const handleCategoryToggle = (cat) => {
-    setLocalGarage((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(cat)
-        ? prev.categories.filter((c) => c !== cat)
-        : [...prev.categories, cat],
-    }));
-  };
+  const handleNext = async () => {
+    if (step === 0) {
+      const errs = {};
+      if (!garage.companyName) errs.companyName = "Required";
+      if (!garage.categories?.length)
+        errs.categories = "Select at least one category";
+      if (!garage.serviceArea?.length) errs.serviceArea = "Add service area";
+      if (!garage.location?.lat || !garage.location?.lng)
+        errs.location = "Add location";
+      if (!garage.workingHours?.open || !garage.workingHours?.close)
+        errs.workingHours = "Add working hours";
+      if (!garage.availability?.length)
+        errs.availability = "Choose availability";
+      setErrors(errs);
+      if (Object.keys(errs).length > 0) return;
 
-  const handleDocsChange = (type, file) => {
-    setDocs((prev) => ({ ...prev, [type]: file }));
-  };
-
-  const handleDocsDelete = (type) => {
-    setDocs((prev) => ({ ...prev, [type]: null }));
-  };
-
-  const validateStep1 = () => {
-    const errs = {};
-    if (!localGarage.companyName) errs.companyName = "Garage name is required";
-    if (!localGarage.serviceArea || localGarage.serviceArea.length === 0)
-      errs.serviceArea = "At least one service area is required";
-    if (
-      !localGarage.location ||
-      !localGarage.location.lat ||
-      !localGarage.location.lng
-    )
-      errs.location = "Location is required";
-    if (!localGarage.availability || localGarage.availability.length === 0)
-      errs.availability = "Select available days";
-    if (
-      !localGarage.workingHours ||
-      !localGarage.workingHours.open ||
-      !localGarage.workingHours.close
-    )
-      errs.workingHours = "Set opening and closing time";
-    return errs;
-  };
-
-  const validateStep2 = () => {
-    const errs = {};
-    if (!agreement) errs.agreement = "You must accept the terms";
-    if (garageImages.length < 3)
-      errs.garageImages = "Please upload at least 3 garage images.";
-    return errs;
-  };
-
-  const handleContinueStep1 = async () => {
-    const errs = validateStep1();
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    try {
-      const payload = {
-        companyName: localGarage.companyName,
-        serviceArea: localGarage.serviceArea,
-        location: localGarage.location,
-        availability: localGarage.availability,
-        workingHours: localGarage.workingHours,
-      };
-      await dispatch(saveProviderGeneralDetails(payload)).unwrap();
-      dispatch(setGarage(payload));
+      await dispatch(saveProviderGeneralDetails(garage)).unwrap();
+      dispatch(setGarage(garage));
+      toast.success("Garage details saved");
       setStepLocal(1);
-      toast.success("General details saved!", { position: "top-center" });
-    } catch (err) {
-      toast.error(err || "Failed to save details", { position: "top-center" });
-    }
-  };
+    } else if (step === 1) {
+      const errs = {};
+      if (!agreement) errs.agreement = "Accept terms";
+      if (garageImages.length < 3)
+        errs.garageImages = "Upload at least 3 images";
+      setErrors(errs);
+      if (Object.keys(errs).length > 0) return;
 
-  const handleContinueStep2 = async () => {
-    const errs = validateStep2();
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    try {
       await dispatch(uploadProviderDocs({ docs })).unwrap();
-      await dispatch(markOnboardingComplete()).unwrap(); // ✅ Call new thunk here
-      await dispatch(refreshUser()).unwrap(); // ✅ Refresh user data
-      toast.success("Garage images and documents uploaded!", {
-        position: "top-center",
-      });
+      toast.success("Images & documents uploaded");
+      setStepLocal(2);
+    } else if (step === 2) {
+      const errs = validateStep3();
+      setErrors(errs);
+      if (Object.keys(errs).length > 0) return;
 
-      setTimeout(() => {
-        navigate("/provider/dashboard");
-      }, 1200);
-    } catch (err) {
-      toast.error(err || "Upload failed. Please try again.", {
-        position: "top-center",
-      });
+      await dispatch(saveBankDetails(bankDetails)).unwrap();
+      await dispatch(markOnboardingComplete()).unwrap();
+      await dispatch(refreshUser()).unwrap();
+      toast.success("Onboarding complete 🎉");
+      navigate("/provider/dashboard");
     }
   };
 
-  // --- Render ---
   return (
-    <Box className="w-full max-w-[700px] mx-auto min-h-screen flex flex-col justify-between">
+    <Box className="w-full max-w-[700px] mx-auto">
       <ProgressBar step={step} total={STEPS.length} />
       <Stepper activeStep={step} alternativeLabel sx={{ mb: 3 }}>
         {STEPS.map((label) => (
@@ -164,160 +122,76 @@ export default function ProviderGarageOnboarding() {
           </Step>
         ))}
       </Stepper>
-      <Box className="flex-1">
+      <Box>
         {step === 0 && (
           <>
-            <Typography
-              variant="h5"
-              fontWeight={700}
-              className="mt-8 mb-4 text-slate-800"
-            >
-              Garage/Workshop Details
+            <Typography variant="h6" gutterBottom>
+              Garage Details
             </Typography>
             <GarageDetailsForm
-              garage={localGarage}
+              garage={garage}
               errors={errors}
-              onChange={handleChange}
-              onCategoryToggle={handleCategoryToggle}
+              onChange={(field, value) =>
+                dispatch(setGarage({ ...garage, [field]: value }))
+              }
             />
-            <Box className="mt-6 flex justify-end">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleContinueStep1}
-                aria-label="Continue"
-              >
-                Continue
-              </Button>
-            </Box>
           </>
         )}
         {step === 1 && (
           <>
-            <Divider className="my-6" />
-            <Typography
-              variant="h6"
-              fontWeight={600}
-              className="mb-2 text-slate-800"
-            >
-              Garage Images
-            </Typography>
+            <Divider className="my-4" />
             <GarageImagesUpload />
-            {errors.garageImages && (
-              <Typography color="error" variant="caption" sx={{ mt: 1, mb: 2 }}>
-                {errors.garageImages}
-              </Typography>
-            )}
-            <Divider className="my-6" />
-            <Typography
-              variant="h6"
-              fontWeight={600}
-              className="mb-2 text-slate-800"
-            >
-              Document Uploads
-            </Typography>
+            <Divider className="my-4" />
+            <Typography variant="h6">Documents</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <FileUploadZone
-                  label="Business License (PDF, JPG, PNG)"
-                  files={docs.license ? [docs.license] : []}
-                  onFileChange={(e) =>
-                    handleDocsChange("license", e.target.files[0])
-                  }
-                  onDelete={() => handleDocsDelete("license")}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  maxSizeMB={5}
-                  single
-                  uploading={uploadState.uploading}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FileUploadZone
-                  label="GST Registration (PDF, JPG, PNG)"
-                  files={docs.gst ? [docs.gst] : []}
-                  onFileChange={(e) =>
-                    handleDocsChange("gst", e.target.files[0])
-                  }
-                  onDelete={() => handleDocsDelete("gst")}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  maxSizeMB={5}
-                  single
-                  uploading={uploadState.uploading}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FileUploadZone
-                  label="Owner ID Proof (PDF, JPG, PNG)"
-                  files={docs.id_proof ? [docs.id_proof] : []}
-                  onFileChange={(e) =>
-                    handleDocsChange("id_proof", e.target.files[0])
-                  }
-                  onDelete={() => handleDocsDelete("id_proof")}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  maxSizeMB={5}
-                  single
-                  uploading={uploadState.uploading}
-                />
-              </Grid>
-            </Grid>
-            <Box className="mt-4">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={agreement}
-                    onChange={(e) => setAgreement(e.target.checked)}
-                    color="primary"
-                    inputProps={{ "aria-label": "Accept Terms & Conditions" }}
+              {["license", "gst", "id_proof"].map((type) => (
+                <Grid item xs={12} sm={6} key={type}>
+                  <FileUploadZone
+                    label={type.toUpperCase()}
+                    files={docs[type] ? [docs[type]] : []}
+                    onFileChange={(e) =>
+                      setDocs({ ...docs, [type]: e.target.files[0] })
+                    }
+                    onDelete={() => setDocs({ ...docs, [type]: null })}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    maxSizeMB={5}
+                    single
+                    uploading={uploadState.uploading}
                   />
-                }
-                label={
-                  <Typography variant="body2">
-                    I agree to the{" "}
-                    <a
-                      href="/terms"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline text-indigo-600"
-                    >
-                      Terms & Conditions
-                    </a>
-                  </Typography>
-                }
-              />
-              {errors.agreement && (
-                <Typography
-                  color="error"
-                  variant="caption"
-                  className="block mt-1"
-                >
-                  {errors.agreement}
-                </Typography>
-              )}
-              {uploadState.error && (
-                <Typography
-                  color="error"
-                  variant="caption"
-                  className="block mt-1"
-                >
-                  {uploadState.error}
-                </Typography>
-              )}
-            </Box>
-            <Box className="mt-6 flex justify-end">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleContinueStep2}
-                aria-label="Finish"
-                disabled={uploadState.uploading || garageImagesUploading}
-              >
-                {uploadState.uploading || garageImagesUploading
-                  ? "Uploading..."
-                  : "Finish"}
-              </Button>
-            </Box>
+                </Grid>
+              ))}
+            </Grid>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={agreement}
+                  onChange={(e) => setAgreement(e.target.checked)}
+                />
+              }
+              label="I agree to the Terms & Conditions"
+            />
+            {errors.agreement && (
+              <Typography color="error">{errors.agreement}</Typography>
+            )}
           </>
         )}
+        {step === 2 && (
+          <>
+            <Typography variant="h6" gutterBottom>
+              Bank Details
+            </Typography>
+            <BankDetailsForm
+              values={bankDetails}
+              onChange={setBankDetails}
+              errors={errors}
+            />
+          </>
+        )}
+      </Box>
+      <Box className="mt-6 flex justify-end">
+        <Button variant="contained" color="primary" onClick={handleNext}>
+          {step === 2 ? "Finish" : "Continue"}
+        </Button>
       </Box>
       <ToastContainer />
     </Box>
