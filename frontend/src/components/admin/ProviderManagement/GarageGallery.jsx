@@ -183,7 +183,7 @@ const GarageGallery = ({
     try {
       await onImageReject(id);
       setStatuses((prev) => prev.map((s, i) => (i === idx ? "rejected" : s)));
-      toast.info("Image rejected", { autoClose: 2000 });
+      toast.error("Image rejected", { autoClose: 2000 });
     } catch {
       toast.error("Failed to reject image", { autoClose: 2000 });
     }
@@ -203,7 +203,7 @@ const GarageGallery = ({
     try {
       await onRejectAll();
       setStatuses(images.map(() => "rejected"));
-      toast.info("All images rejected", { autoClose: 2000 });
+      toast.error("All images rejected", { autoClose: 2000 });
     } catch {
       toast.error("Failed to reject all", { autoClose: 2000 });
     }

@@ -38,7 +38,7 @@ import ProviderRequests from "./pages/provider/Assignments";
 import ProviderOffers from "./pages/provider/OfferManagement";
 import PayoutsDashboard from "./pages/provider/PayoutDashboard";
 import AvailabilitySchedule from "./pages/provider/AvailabilitySchedule";
-import ProviderGarageOnboarding from "./pages/onboarding/provider/ProviderGarageOnboarding.jsx";
+import ProviderLocked from "./pages/provider/ProviderLocked"; // ⛔ New
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -67,7 +67,6 @@ import { CircularProgress } from "@mui/material";
 import { RoleGate } from "./utils/roleGate";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { ProviderAccessGuard } from "./hooks/useProviderAccessGuard";
-import ProviderKycPending from "./pages/provider/ProviderKycPending.jsx";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -203,18 +202,12 @@ export default function App() {
                         element={<AvailabilitySchedule />}
                       />
                       <Route path="offers" element={<ProviderOffers />} />
-                      {/* KYC Onboarding */}
                       <Route
-                        path="onboarding"
-                        element={<ProviderGarageOnboarding />}
+                        path="assignments"
+                        element={<ProviderRequests />}
                       />
-                      <Route path="pending" element={<ProviderKycPending />} />
-                      {/* fallback */}
-                      <Route
-                        path="*"
-                        element={<Navigate to="/provider/dashboard" replace />}
-                      />
-
+                      <Route path="payouts" element={<PayoutsDashboard />} />
+                      <Route path="locked" element={<ProviderLocked />} />
                       {/* <Route path="kyc" element={null} /> */}
                       {/* <Route path="profile" element={null} /> */}
                       {/* <Route path="pricing" element={null} /> */}

@@ -1,5 +1,5 @@
 // src/pages/admin/ProviderManagement.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import ProviderTable from "../../components/admin/ProviderManagement/ProviderTable";
 import ProviderPopup from "../../components/admin/ProviderManagement/ProviderPopup";
@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import {
   approveProvider,
-  rejectProviderAndReset,
+  rejectProvider,
 } from "../../features/provider/providerThunks";
 import { DomainVerification, ErrorOutline } from "@mui/icons-material";
 
@@ -15,10 +15,13 @@ const ProviderManagement = () => {
   const dispatch = useDispatch();
   const [selectedProvider, setSelectedProvider] = useState(null);
 
-  const handleApprove = async (id) => {
+  const handleApprove = async (id, companyName) => {
+    if (!id) return;
     try {
       await dispatch(approveProvider(id)).unwrap();
-      toast.success("Provider approved.", { autoClose: 2600 });
+      toast.success(`Provider "${companyName || "Unknown"}" approved.`, {
+        autoClose: 2600,
+      });
       setSelectedProvider(null);
     } catch (err) {
       toast.error(
@@ -28,14 +31,11 @@ const ProviderManagement = () => {
   };
 
   const handleReject = async (id, reason) => {
+    if (!id) return;
     try {
-      await dispatch(
-        rejectProviderAndReset({ providerId: id, reason })
-      ).unwrap();
-      toast.success("Provider rejected and onboarding reset.", {
-        autoClose: 2900,
-      });
-      setSelectedProvider(null);
+      await dispatch(rejectProvider({ providerId: id, reason })).unwrap();
+      toast.error("Provider rejected.", { autoClose: 2900 });
+      setTimeout(() => setSelectedProvider(null), 250); // Delay close
     } catch (err) {
       toast.error(typeof err === "string" ? err : "Failed to reject provider.");
     }
@@ -122,8 +122,18 @@ const ProviderManagement = () => {
         open={!!selectedProvider}
         provider={selectedProvider}
         onClose={() => setSelectedProvider(null)}
-        onApprove={() => handleApprove(selectedProvider?.id)}
-        onReject={(reason) => handleReject(selectedProvider?.id, reason)}
+        onApprove={() =>
+          selectedProvider &&
+          handleApprove(selectedProvider.id, selectedProvider.companyName)
+        }
+        onReject={(reason) =>
+          selectedProvider &&
+          handleReject(
+            selectedProvider.id,
+            reason,
+            selectedProvider.companyName
+          )
+        }
       />
     </Box>
   );

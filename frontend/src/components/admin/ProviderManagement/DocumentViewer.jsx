@@ -130,7 +130,7 @@ const DocumentViewer = ({
     try {
       await onReject(doc.id);
       setDocStatus("rejected");
-      toast.info("Document rejected", { autoClose: 2000 });
+      toast.error("Document rejected", { autoClose: 2000 });
     } catch (err) {
       toast.error("Failed to reject document", { autoClose: 2000 });
     }

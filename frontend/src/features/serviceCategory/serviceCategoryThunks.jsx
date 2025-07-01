@@ -2,11 +2,24 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../utils/axios";
 
 // Fetch all categories with optional search or status filters
-export const fetchServiceCategories = createAsyncThunk(
+export const fetchAdminServiceCategories = createAsyncThunk(
   "serviceCategory/fetchAll",
   async (params = {}, { rejectWithValue }) => {
     try {
       const res = await api.get("/api/admin/service-categories", { params });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data.error);
+    }
+  }
+);
+
+// Fetch all categories with optional search or status filters
+export const fetchServiceCategories = createAsyncThunk(
+  "serviceCategory/fetchPublicAll",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/service-categories", { params });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response.data.error);

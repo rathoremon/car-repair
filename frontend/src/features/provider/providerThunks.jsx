@@ -37,17 +37,15 @@ export const approveProvider = createAsyncThunk(
   }
 );
 
-// Reject provider KYC & reset onboarding (admin)
-export const rejectProviderAndReset = createAsyncThunk(
+export const rejectProvider = createAsyncThunk(
   "provider/rejectAndReset",
   async ({ providerId, reason }, { rejectWithValue }) => {
     try {
-      await api.patch(`/api/admin/providers/${providerId}/kyc`, {
+      const res = await api.patch(`/api/admin/providers/${providerId}/kyc`, {
         kycStatus: "rejected",
         rejectionReason: reason,
       });
-      await api.delete(`/api/provider/${providerId}/onboarding-reset`);
-      return { id: providerId, reason };
+      return res.data.data; // <--- Return the actual provider!
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || "Rejection failed");
     }

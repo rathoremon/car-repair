@@ -1,11 +1,11 @@
-import React, { useRef } from "react";
+// src/components/onboarding/provider/GarageImagesUpload.jsx
+import React, { useRef, useEffect } from "react";
 import {
   Box,
   Typography,
   IconButton,
   LinearProgress,
   Paper,
-  Grid,
   Tooltip,
   Fade,
 } from "@mui/material";
@@ -17,8 +17,29 @@ import {
   uploadGarageImages,
   removeGarageImage,
 } from "../../../features/onboarding/onboardingThunks";
-import { setOnboardingError } from "../../../features/onboarding/onboardingSlice";
+import {
+  setOnboardingError,
+  setGarageImages,
+} from "../../../features/onboarding/onboardingSlice";
 
+const DOCUMENTS_BASE_URL =
+  import.meta.env.VITE_DOCUMENTS_URL ||
+  "http://localhost:5000/uploads/documents/";
+
+const getFileName = (path) => {
+  // Always just the filename, even if Windows/absolute
+  return path ? path.split(/[\\/]/).pop() : "";
+};
+const getImageUrl = (img) => {
+  if (!img) return "/placeholder-image.png";
+  if (img.previewUrl) return img.previewUrl;
+  if (img.filePath) {
+    // Get just the filename, ignore all directories
+    const filename = getFileName(img.filePath);
+    return `${DOCUMENTS_BASE_URL}${filename}`;
+  }
+  return "/placeholder-image.png";
+};
 const RECOMMENDED_ANGLES = [
   "Front View",
   "Side View",
@@ -42,12 +63,28 @@ export default function GarageImagesUpload() {
     garageImagesProgress,
     garageImagesError,
   } = useSelector((state) => state.onboarding);
+  const providerDocuments = useSelector(
+    (state) => state.onboarding.providerDocuments
+  );
 
-  // Handle file selection
+  useEffect(() => {
+    // Only set if garageImages is empty or incomplete
+    if (Array.isArray(providerDocuments)) {
+      const garageImgs = providerDocuments.filter(
+        (doc) => doc.type === "garage_image"
+      );
+      if (
+        garageImgs.length &&
+        (garageImages.length !== garageImgs.length ||
+          garageImages.some((img) => !img.filePath))
+      ) {
+        dispatch(setGarageImages(garageImgs));
+      }
+    }
+    // eslint-disable-next-line
+  }, [providerDocuments]);
   const handleFiles = (files) => {
     let newFiles = Array.from(files);
-
-    // Validation: type, size, count
     if (garageImages.length + newFiles.length > MAX_IMAGES) {
       dispatch(
         setOnboardingError(`You can upload up to ${MAX_IMAGES} images.`)
@@ -65,19 +102,16 @@ export default function GarageImagesUpload() {
       }
       return true;
     });
-
     if (newFiles.length > 0) {
       dispatch(uploadGarageImages(newFiles));
     }
   };
 
-  // Remove image (frontend and backend)
   const handleDelete = (idx) => {
     const img = garageImages[idx];
     if (img && img.id) dispatch(removeGarageImage(img.id));
   };
 
-  // Drag-and-drop handler
   const handleDrop = (e) => {
     e.preventDefault();
     if (garageImagesUploading) return;
@@ -85,7 +119,7 @@ export default function GarageImagesUpload() {
   };
 
   return (
-    <Box>
+    <Box sx={{ width: "100%" }}>
       <Typography fontWeight={600} mb={1}>
         Garage Images <span style={{ color: "#888" }}>(3–6 images)</span>
       </Typography>
@@ -94,12 +128,18 @@ export default function GarageImagesUpload() {
       </Typography>
       <Paper
         variant="outlined"
-        className="p-4 mb-2 rounded-xl border-dashed border-2 border-gray-300 bg-gray-50 cursor-pointer transition-shadow hover:shadow-lg"
         sx={{
           borderRadius: 2,
           borderStyle: "dashed",
           minHeight: 120,
           mb: 2,
+          p: { xs: 2, sm: 3 },
+          bgcolor: "#f5f6fa",
+          boxShadow: 0,
+          width: "100%",
+          cursor: "pointer",
+          transition: "box-shadow 0.2s",
+          "&:hover": { boxShadow: 2 },
         }}
         onClick={() => inputRef.current?.click()}
         onDrop={handleDrop}
@@ -116,7 +156,15 @@ export default function GarageImagesUpload() {
           onChange={(e) => handleFiles(e.target.files)}
           aria-label="Upload garage images"
         />
-        <Box className="flex flex-col items-center justify-center">
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
           <AddPhotoAlternateIcon color="primary" sx={{ fontSize: 36 }} />
           <Typography variant="body2" color="text.secondary">
             Drag & drop or click to select images
@@ -126,44 +174,60 @@ export default function GarageImagesUpload() {
           </Typography>
         </Box>
       </Paper>
+      {garageImagesUploading && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={garageImagesProgress || 0}
+            color="primary"
+          />
+        </Box>
+      )}
       {garageImagesError && (
         <Typography color="error" variant="caption" mb={1}>
           {garageImagesError}
         </Typography>
       )}
-      <Grid container spacing={2}>
+
+      <Box
+        sx={{
+          width: "100%",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(auto-fit, minmax(150px, 1fr))",
+          },
+          gap: 2,
+        }}
+      >
         <AnimatePresence>
           {garageImages.filter(Boolean).map((img, idx) => (
-            <Grid
-              item
-              xs={6}
-              sm={4}
-              key={img.id || img.filePath || idx}
-              component={motion.div}
+            <motion.div
+              key={img.id || img.filePath || img.previewUrl || idx}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.25 }}
+              style={{ width: "100%" }}
             >
               <Paper
-                elevation={3}
-                className="relative group"
+                elevation={2}
                 sx={{
-                  borderRadius: 3,
+                  borderRadius: 0.7,
                   overflow: "hidden",
                   position: "relative",
+                  width: "100%",
+                  minHeight: 120,
                   transition: "box-shadow 0.2s",
                   "&:hover": { boxShadow: 8 },
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  p: 0,
                 }}
               >
                 <img
-                  src={
-                    img?.filePath
-                      ? img.filePath.startsWith("/")
-                        ? `http://localhost:5000${img.filePath}`
-                        : img.filePath
-                      : img?.url || "/placeholder-image.png"
-                  }
+                  src={getImageUrl(img)}
                   alt={
                     img?.label ||
                     RECOMMENDED_ANGLES[idx] ||
@@ -175,26 +239,42 @@ export default function GarageImagesUpload() {
                     objectFit: "cover",
                     display: "block",
                   }}
+                  loading="lazy"
                 />
-                {/* ...rest of your code... */}
+                <Fade in>
+                  <Tooltip title="Delete image">
+                    <IconButton
+                      size="small"
+                      aria-label="delete image"
+                      onClick={() => handleDelete(idx)}
+                      sx={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        background: "rgba(255,255,255,0.7)",
+                        "&:hover": { background: "rgba(244,67,54,0.25)" },
+                        zIndex: 2,
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" color="error" />
+                    </IconButton>
+                  </Tooltip>
+                </Fade>
               </Paper>
-            </Grid>
+            </motion.div>
           ))}
         </AnimatePresence>
         {/* Show empty slots for recommended angles */}
         {Array.from({
           length: Math.max(0, MAX_IMAGES - garageImages.length),
         }).map((_, i) => (
-          <Grid
-            item
-            xs={6}
-            sm={4}
+          <motion.div
             key={`empty-${i}`}
-            component={motion.div}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 0.5, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.25 }}
+            style={{ width: "100%" }}
           >
             <Paper
               variant="outlined"
@@ -208,6 +288,7 @@ export default function GarageImagesUpload() {
                 borderStyle: "dashed",
                 borderColor: "#c7d2fe",
                 position: "relative",
+                width: "100%",
               }}
             >
               <Typography
@@ -218,9 +299,9 @@ export default function GarageImagesUpload() {
                 {RECOMMENDED_ANGLES[garageImages.length + i] || "Garage Image"}
               </Typography>
             </Paper>
-          </Grid>
+          </motion.div>
         ))}
-      </Grid>
+      </Box>
       <Typography
         variant="caption"
         color={

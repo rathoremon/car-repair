@@ -1,3 +1,5 @@
+// src/features/onboarding/onboardingThunks.js
+
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../utils/axios";
 import { setGarageImagesProgress } from "./onboardingSlice";
@@ -5,28 +7,29 @@ import { setGarageImagesProgress } from "./onboardingSlice";
 // Save provider general details (step 1)
 export const saveProviderGeneralDetails = createAsyncThunk(
   "onboarding/saveProviderGeneralDetails",
-  async (providerDetails, { rejectWithValue }) => {
+  async ({ providerId, categories, ...garage }, { rejectWithValue }) => {
+    if (!providerId) throw new Error("Provider ID not found");
     try {
-      const providerId = localStorage.getItem("providerId");
-      if (!providerId) throw new Error("Provider ID not found");
-
-      const res = await api.put(`/api/provider/${providerId}`, providerDetails);
+      const payload = {
+        ...garage,
+        serviceCategories: categories,
+      };
+      const res = await api.put(`/api/provider/${providerId}`, payload);
       return res.data.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.error || err.message || "Failed to save details"
+        err.response?.data?.error || "Failed to save details"
       );
     }
   }
 );
 
+// src/features/onboarding/onboardingThunks.js
 export const saveBankDetails = createAsyncThunk(
   "onboarding/saveBankDetails",
-  async (bankDetails, { rejectWithValue }) => {
+  async ({ providerId, ...bankDetails }, { rejectWithValue }) => {
     try {
-      const providerId = localStorage.getItem("providerId");
       if (!providerId) throw new Error("Provider ID not found");
-
       const res = await api.put(`/api/provider/${providerId}`, {
         ...bankDetails,
       });
@@ -94,7 +97,6 @@ export const createVehicles = createAsyncThunk(
         const res = await api.post("/api/vehicles", vehicle);
         responses.push(res.data.data);
       }
-
       return responses;
     } catch (err) {
       return rejectWithValue(
@@ -104,28 +106,37 @@ export const createVehicles = createAsyncThunk(
   }
 );
 
-// Upload provider document
+// Upload provider documents
 export const uploadProviderDocs = createAsyncThunk(
   "onboarding/uploadProviderDocs",
-  async ({ docs }, { rejectWithValue }) => {
+  async ({ providerId, docs }, { rejectWithValue }) => {
     try {
       const results = [];
 
       const uploadSingle = async (doc, type) => {
+        if (!doc) return null;
         const formData = new FormData();
-        formData.append("file", doc);
+        formData.append("file", doc.file ? doc.file : doc);
         formData.append("type", type);
+        formData.append("providerId", providerId);
         const res = await api.post("/api/document/upload-single", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         return res.data.data;
       };
 
-      if (docs.license)
-        results.push(await uploadSingle(docs.license, "license"));
-      if (docs.gst) results.push(await uploadSingle(docs.gst, "gst"));
-      if (docs.id_proof)
-        results.push(await uploadSingle(docs.id_proof, "id_proof"));
+      if (docs.license && (!docs.license.filePath || docs.license.file)) {
+        const uploaded = await uploadSingle(docs.license, "license");
+        if (uploaded) results.push(uploaded);
+      }
+      if (docs.gst && (!docs.gst.filePath || docs.gst.file)) {
+        const uploaded = await uploadSingle(docs.gst, "gst");
+        if (uploaded) results.push(uploaded);
+      }
+      if (docs.id_proof && (!docs.id_proof.filePath || docs.id_proof.file)) {
+        const uploaded = await uploadSingle(docs.id_proof, "id_proof");
+        if (uploaded) results.push(uploaded);
+      }
 
       return results;
     } catch (err) {
@@ -139,15 +150,32 @@ export const uploadProviderDocs = createAsyncThunk(
 // Mark onboarding complete
 export const markOnboardingComplete = createAsyncThunk(
   "onboarding/markOnboardingComplete",
-  async (_, { rejectWithValue }) => {
+  async ({ providerId }, { rejectWithValue }) => {
     try {
-      const res = await api.patch("/api/user/onboarding-complete", {});
+      const res = await api.patch("/api/user/onboarding-complete", {
+        providerId,
+      });
       return res.data;
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.error ||
           err.message ||
           "Failed to mark onboarding complete"
+      );
+    }
+  }
+);
+
+// Fetch provider documents (all doc types, one API)
+export const fetchProviderDocuments = createAsyncThunk(
+  "onboarding/fetchProviderDocuments",
+  async (providerId, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(`/api/document?providerId=${providerId}`);
+      return data.data; // array of { id, type, filePath, ... }
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.error || "Failed to fetch documents"
       );
     }
   }
@@ -165,6 +193,40 @@ export const resetProviderOnboarding = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.error || err.message || "Failed to reset onboarding"
+      );
+    }
+  }
+);
+
+// Fetch draft onboarding data for crash-proof resume
+export const fetchOnboardingDraft = createAsyncThunk(
+  "onboarding/fetchOnboardingDraft",
+  async (providerId, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(
+        `/api/provider/${providerId}/onboarding-draft`
+      );
+      return data.draft;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.error || "Failed to fetch draft"
+      );
+    }
+  }
+);
+
+// Save onboarding draft
+export const saveOnboardingDraft = createAsyncThunk(
+  "onboarding/saveOnboardingDraft",
+  async ({ providerId, draft }, { rejectWithValue }) => {
+    try {
+      await api.patch(`/api/provider/${providerId}/onboarding-draft`, {
+        draft,
+      });
+      return true;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.error || "Failed to save draft"
       );
     }
   }

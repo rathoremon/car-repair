@@ -247,19 +247,28 @@ const VerifyOtp = () => {
         toast.success("OTP Verified Successfully!");
 
         setTimeout(() => {
-          const verifiedUser = dispatchResult.payload.user;
-          if (verifiedUser) {
-            if (
-              !verifiedUser.onboardingComplete &&
-              verifiedUser.role === "provider"
-            ) {
-              navigate("/onboarding");
-            } else if (verifiedUser.role === "provider") {
-              navigate("/provider/dashboard");
-            } else if (verifiedUser.role === "admin") {
+          const user = dispatchResult.payload.user;
+          if (user) {
+            if (user.role === "provider") {
+              // New logic: prefer provider.kycStatus for all routing
+              const kycStatus = user.provider?.kycStatus;
+              if (!user.onboardingComplete) {
+                navigate("/onboarding");
+              } else if (kycStatus === "pending" || !kycStatus) {
+                navigate("/provider/pending");
+              } else if (kycStatus === "verified") {
+                navigate("/provider/dashboard");
+              } else if (kycStatus === "rejected") {
+                navigate("/onboarding");
+              } else {
+                navigate("/provider/dashboard");
+              }
+            } else if (user.role === "admin") {
               navigate("/admin/dashboard");
-            } else {
+            } else if (user.role === "customer") {
               navigate("/customer/home");
+            } else {
+              navigate("/");
             }
           } else {
             navigate("/");

@@ -17,8 +17,12 @@ const Onboarding = () => {
 
   useEffect(() => {
     if (!loading && user?.onboardingComplete) {
-      if (user.role === "provider" && user.provider?.kycStatus === "verified") {
-        navigate("/provider/dashboard", { replace: true });
+      if (user.role === "provider") {
+        if (user.provider?.kycStatus === "verified") {
+          navigate("/provider/dashboard", { replace: true });
+        } else if (user.provider?.kycStatus === "pending") {
+          navigate("/provider/pending", { replace: true });
+        }
       } else if (user.role === "customer") {
         navigate("/customer/home", { replace: true });
       } else if (user.role === "admin") {
@@ -32,7 +36,7 @@ const Onboarding = () => {
         toast.warning(
           "Your previous onboarding was rejected. Please re-submit the correct details."
         );
-      }, 200); // Prevent race with MUI mount
+      }, 1000); // Prevent race with MUI mount
     }
   }, [loading, user, navigate]);
 

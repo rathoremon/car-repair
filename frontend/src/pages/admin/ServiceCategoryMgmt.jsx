@@ -11,7 +11,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Refresh, CloudDownload } from "@mui/icons-material";
-import { fetchServiceCategories } from "../../features/serviceCategory/serviceCategoryThunks";
+import { fetchAdminServiceCategories } from "../../features/serviceCategory/serviceCategoryThunks";
 import ServiceCategorySearchBar from "../../components/Service/ServiceCategorySearchBar";
 import ServiceCategoryForm from "../../components/Service/ServiceCategoryForm";
 import ServiceCategoryList from "../../components/Service/ServiceCategoryList";
@@ -28,7 +28,10 @@ const ServiceCategoryMgmt = () => {
     try {
       setRefreshing(true);
       await dispatch(
-        fetchServiceCategories({ search: searchTerm, status: filterStatus })
+        fetchAdminServiceCategories({
+          search: searchTerm,
+          status: filterStatus,
+        })
       );
       toast.success("Refreshed successfully");
     } catch {
@@ -40,7 +43,7 @@ const ServiceCategoryMgmt = () => {
 
   useEffect(() => {
     dispatch(
-      fetchServiceCategories({ search: searchTerm, status: filterStatus })
+      fetchAdminServiceCategories({ search: searchTerm, status: filterStatus })
     );
   }, [dispatch, searchTerm, filterStatus]);
 

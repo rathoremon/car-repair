@@ -9,18 +9,18 @@ import {
   HiOutlineExclamationCircle,
   HiOutlineArrowLeft,
 } from "react-icons/hi";
-
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer, Slide } from "react-toastify";
 import { login as loginThunk } from "../../features/auth/authThunks";
 import "react-toastify/dist/ReactToastify.css";
-import { auth } from "../../firebase"; // Import Firebase auth
+import { auth } from "../../firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 function useCapsLock(ref) {
   const [capsLock, setCapsLock] = useState(false);
+
   useEffect(() => {
     const handler = (e) =>
       setCapsLock(e.getModifierState && e.getModifierState("CapsLock"));
@@ -35,6 +35,19 @@ function useCapsLock(ref) {
     }
   }, [ref]);
   return capsLock;
+}
+
+// --------- KYC Routing Helper -----
+function getProviderRedirect(user) {
+  if (!user.onboardingComplete) return "/onboarding";
+  if (
+    (user.onboardingComplete && user.provider.kycStatus === "pending") ||
+    !user.provider.kycStatus
+  )
+    return "/provider/pending";
+  if (user.provider.kycStatus === "verified") return "/provider/dashboard";
+  if (user.provider.kycStatus === "rejected") return "/onboarding";
+  return "/provider/dashboard";
 }
 
 export default function Login({ onSwitch }) {
@@ -113,47 +126,46 @@ export default function Login({ onSwitch }) {
         return;
       }
 
-      // 👉 Admin: No OTP, Direct login
+      // Admin: No OTP, Direct login
       if (user.role === "admin") {
         toast.success(`Welcome back, Admin!`);
         navigate("/admin/dashboard");
         return;
       }
 
-      // Customer/Provider Logic
+      // OTP verification flow for phone login (usually for provider/customer)
       if (next === "verify-otp") {
         await setupRecaptcha();
-        const appVerifier = window.recaptchaVerifier; // ✅ Corrected
+        const appVerifier = window.recaptchaVerifier;
         const phoneNumber = user.phone;
-
         const confirmationResult = await signInWithPhoneNumber(
           auth,
           phoneNumber,
           appVerifier
         );
-
         window.confirmationResult = confirmationResult;
-
         toast.success("OTP sent successfully.");
         navigate("/verify-otp");
-      } else if (next === "onboarding") {
-        navigate("/onboarding");
-      } else if (user) {
-        toast.success(`Welcome back, ${user.name || "User"}!`);
-        if (user.onboardingComplete) {
-          if (user.role === "provider") {
-            navigate("/provider/dashboard");
-          } else if (user.role === "customer") {
-            navigate("/customer/home");
-          } else {
-            navigate("/");
-          }
-        } else {
-          navigate("/onboarding");
-        }
-      } else {
-        toast.error("Login failed. Please try again.");
+        return;
       }
+
+      // Provider login: Use KYC status to determine dashboard/onboarding/pending route
+      if (user.role === "provider") {
+        toast.success(`Welcome back, ${user.name || "User"}!`);
+        navigate(getProviderRedirect(user));
+        return;
+      }
+
+      // Customer login
+      if (user.role === "customer") {
+        toast.success(`Welcome back, ${user.name || "User"}!`);
+        navigate("/customer/home");
+        return;
+      }
+
+      // Fallback for other roles or missing cases
+      toast.success(`Welcome back, ${user.name || "User"}!`);
+      navigate("/");
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong. Please try again.");
@@ -183,7 +195,6 @@ export default function Login({ onSwitch }) {
           Sign In
         </h3>
 
-        {/* Social Login */}
         <div className="flex flex-col gap-2 mb-1">
           <button
             type="button"
@@ -216,7 +227,6 @@ export default function Login({ onSwitch }) {
             className="grid gap-1.5"
           >
             <div className="grid gap-3">
-              {/* Email/Phone */}
               <div>
                 <label
                   htmlFor="login-email"
@@ -262,7 +272,6 @@ export default function Login({ onSwitch }) {
                 )}
               </div>
 
-              {/* Password */}
               <div>
                 <label
                   htmlFor="login-password"

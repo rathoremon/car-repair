@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   getAllProviders,
   approveProvider,
-  rejectProviderAndReset,
+  rejectProvider,
   approveGarageImage,
   rejectGarageImage,
   approveAllGarageImages,
@@ -107,19 +107,19 @@ const providerSlice = createSlice({
       })
 
       // REJECT PROVIDER + RESET ONBOARDING
-      .addCase(rejectProviderAndReset.pending, (state) => {
+      .addCase(rejectProvider.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(rejectProviderAndReset.fulfilled, (state, action) => {
+      .addCase(rejectProvider.fulfilled, (state, action) => {
         state.loading = false;
-        const p = state.providers.find((pr) => pr.id === action.payload.id);
-        if (p) {
-          p.kycStatus = "rejected";
-          p.rejectionReason = action.payload.reason;
+        const updated = action.payload;
+        const idx = state.providers.findIndex((pr) => pr.id === updated.id);
+        if (idx !== -1) {
+          state.providers[idx] = updated;
         }
       })
-      .addCase(rejectProviderAndReset.rejected, (state, action) => {
+      .addCase(rejectProvider.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

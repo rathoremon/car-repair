@@ -143,6 +143,7 @@ export default function ProviderPopup({
     accountHolderName,
     accountNumber,
     ifscCode,
+    serviceCategories,
     bankName,
     branchName,
     upiId,
@@ -426,104 +427,175 @@ export default function ProviderPopup({
                     />
                   </Box>
                   <CardContent sx={{ pt: 0.5, pb: 1.5 }}>
-                    <Grid container spacing={0.7} alignItems="center">
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        pr={{ xs: 8, sm: 4 }}
-                        width={{ xs: "100%", sm: "auto" }}
-                      >
-                        <span style={labelStyle}>Company:</span>
-                        <ValueOrPlaceholder value={companyName} />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        pr={{ xs: 8, sm: 4 }}
-                        width={{ xs: "100%", sm: "auto" }}
-                      >
-                        <span style={labelStyle}>Tier:</span>
-                        <ValueOrPlaceholder
-                          value={tier}
-                          placeholder="Not Categorized"
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        pr={{ xs: 8, sm: 4 }}
-                        width={{ xs: "100%", sm: "auto" }}
-                      >
-                        <span style={labelStyle}>Service Area:</span>
-                        <ValueOrPlaceholder
-                          value={
-                            Array.isArray(serviceArea) && serviceArea.length
-                              ? serviceArea.join(", ")
-                              : ""
-                          }
-                          placeholder="No Service Areas Set"
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        pr={{ xs: 8, sm: 4 }}
-                        width={{ xs: "100%", sm: "auto" }}
-                      >
-                        <span style={labelStyle}>Location:</span>
-                        {isLocationValid ? (
-                          `${location.lat}, ${location.lng}`
-                        ) : (
-                          <ValueOrPlaceholder
-                            value={null}
-                            error
-                            placeholder="Invalid / Not Set"
-                            hint="Missing or invalid coordinates"
-                          />
-                        )}
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        pr={{ xs: 8, sm: 4 }}
-                        width={{ xs: "100%", sm: "205px" }}
-                      >
-                        <span style={labelStyle}>Availability:</span>
-                        <ValueOrPlaceholder
-                          value={
-                            availability && typeof availability === "object"
-                              ? Object.entries(availability)
-                                  .filter(([_, val]) => val)
-                                  .map(([day]) => day)
-                                  .join(", ") || ""
-                              : ""
-                          }
-                          placeholder="No Days Set"
-                        />
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        pr={{ xs: 8, sm: 4 }}
-                        width={{ xs: "100%", sm: "auto" }}
-                      >
-                        <span style={labelStyle}>Working Hours:</span>
-                        <ValueOrPlaceholder
-                          value={
-                            workingHours?.open && workingHours?.close
-                              ? `${workingHours.open} - ${workingHours.close}`
-                              : ""
-                          }
-                          placeholder="Not Specified"
-                        />
-                      </Grid>
-                    </Grid>
+                    <Box
+                      component="table"
+                      sx={{
+                        width: "100%",
+                        borderSpacing: 0,
+                        borderCollapse: "separate",
+                        "& td": {
+                          py: 1.2,
+                          verticalAlign: "top",
+                          border: 0,
+                        },
+                        "& tr:not(:last-of-type) td": {
+                          borderBottom: "1px solid #f3f5fa",
+                        },
+                      }}
+                    >
+                      <tbody>
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Company:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            <ValueOrPlaceholder value={companyName} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Tier:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            <ValueOrPlaceholder
+                              value={tier}
+                              placeholder="Not Categorized"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Service Area:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            <ValueOrPlaceholder
+                              value={
+                                Array.isArray(serviceArea) && serviceArea.length
+                                  ? serviceArea.join(", ")
+                                  : ""
+                              }
+                              placeholder="No Service Areas Set"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Service Categories:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            <ValueOrPlaceholder
+                              value={
+                                Array.isArray(serviceCategories) &&
+                                serviceCategories.length
+                                  ? serviceCategories.join(", ")
+                                  : ""
+                              }
+                              placeholder="No Service Categories Set"
+                            />
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Location:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            {isLocationValid ? (
+                              `${location.lat}, ${location.lng}`
+                            ) : (
+                              <ValueOrPlaceholder
+                                value={null}
+                                error
+                                placeholder="Invalid / Not Set"
+                                hint="Missing or invalid coordinates"
+                              />
+                            )}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Availability:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            <ValueOrPlaceholder
+                              value={
+                                availability && typeof availability === "object"
+                                  ? Object.entries(availability)
+                                      .filter(([_, val]) => val)
+                                      .map(([day]) => day)
+                                      .join(", ") || ""
+                                  : ""
+                              }
+                              placeholder="No Days Set"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            style={{
+                              width: 132,
+                              minWidth: 120,
+                              fontWeight: 700,
+                              color: "#234",
+                            }}
+                          >
+                            Working Hours:
+                          </td>
+                          <td style={{ wordBreak: "break-word" }}>
+                            <ValueOrPlaceholder
+                              value={
+                                workingHours?.open && workingHours?.close
+                                  ? `${workingHours.open} - ${workingHours.close}`
+                                  : ""
+                              }
+                              placeholder="Not Specified"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </Box>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -791,17 +863,7 @@ export default function ProviderPopup({
               color="success"
               size="large"
               disabled={loading || showRejectForm}
-              onClick={async () => {
-                try {
-                  await onApprove();
-                  toast.success("Provider approved!", { autoClose: 2000 });
-                  onClose();
-                } catch (e) {
-                  toast.error("Failed to approve provider.", {
-                    autoClose: 2000,
-                  });
-                }
-              }}
+              onClick={onApprove}
               sx={{
                 borderRadius: 2,
                 fontWeight: 700,
@@ -842,16 +904,9 @@ export default function ProviderPopup({
                 open={showRejectForm}
                 onClose={() => setShowRejectForm(false)}
                 onSubmit={async (reason) => {
-                  try {
-                    await onReject(reason);
-                    toast.success("Provider rejected!", { autoClose: 2000 });
-                    setShowRejectForm(false);
-                    onClose();
-                  } catch (e) {
-                    toast.error("Failed to reject provider.", {
-                      autoClose: 2000,
-                    });
-                  }
+                  await onReject(reason); // Just call the handler
+                  setShowRejectForm(false);
+                  onClose();
                 }}
               />
             )}

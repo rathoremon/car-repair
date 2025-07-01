@@ -25,6 +25,8 @@ const emptyVehicle = {
   fuelType: "",
 };
 
+const DRAFT_KEY = "customer_vehicle_onboarding_draft_v1"; // Update key on breaking structure change
+
 export default function CustomerVehicleOnboarding() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -32,9 +34,25 @@ export default function CustomerVehicleOnboarding() {
     useSelector((state) => state.onboarding.vehicles) || [];
   const user = useSelector((state) => state.auth.user);
 
-  const [localVehicles, setLocalVehicles] = useState(() =>
-    vehiclesFromRedux.length ? vehiclesFromRedux : [{ ...emptyVehicle }]
-  );
+  // ------ RESTORE DRAFT ------
+  const [localVehicles, setLocalVehicles] = useState(() => {
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      try {
+        const { vehicles } = JSON.parse(draft);
+        if (Array.isArray(vehicles) && vehicles.length) {
+          toast.info("Restored your saved draft!", {
+            toastId: "restore-draft",
+          });
+          return vehicles;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    return vehiclesFromRedux.length ? vehiclesFromRedux : [{ ...emptyVehicle }];
+  });
+
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +63,26 @@ export default function CustomerVehicleOnboarding() {
     const timer = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(timer);
   }, []);
+
+  // ------ AUTO-SAVE DRAFT ------
+  useEffect(() => {
+    // Only save if not submitted yet
+    if (user?.role === "customer") {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ vehicles: localVehicles })
+      );
+    }
+  }, [localVehicles, user?.role]);
+
+  // ------ CLEAR DRAFT ------
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    toast.success("Draft cleared!", {
+      toastId: "clear-draft",
+      autoClose: 1800,
+    });
+  };
 
   const handleChange = (idx, field, value) => {
     setLocalVehicles((prev) =>
@@ -113,7 +151,7 @@ export default function CustomerVehicleOnboarding() {
       dispatch(setVehicles(localVehicles));
       await dispatch(markOnboardingComplete()).unwrap();
       await dispatch(refreshUser()).unwrap();
-
+      clearDraft();
       toast.success("Vehicle details saved!", {
         position: "top-center",
         autoClose: 2000,
@@ -141,6 +179,7 @@ export default function CustomerVehicleOnboarding() {
   const handleSkip = () => {
     dispatch(setVehicleStepComplete(false));
     dispatch(setStep(1));
+    clearDraft();
     toast.info("Skipping vehicle details...", {
       position: "bottom-center",
       autoClose: 1500,

@@ -1,17 +1,16 @@
-import React, { useEffect } from "react";
+// src/components/onboarding/provider/GarageDetailsForm.jsx
+import React from "react";
 import {
   Box,
   TextField,
   Typography,
-  Chip,
   Autocomplete,
   Stack,
   InputAdornment,
-  CircularProgress,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import RoomIcon from "@mui/icons-material/Room";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchServiceCategories } from "../../../features/serviceCategory/serviceCategoryThunks";
 
 const DAYS = [
   "Monday",
@@ -27,67 +26,15 @@ export default function GarageDetailsForm({
   garage,
   errors,
   onChange = () => {},
+  onLocationPicker,
 }) {
-  const dispatch = useDispatch();
-  const { categories = [], loading } = useSelector(
-    (state) => state.serviceCategory
-  );
-
+  // Pick from either categories or serviceCategories for prefill support!
+  const selectedCategories = garage?.categories?.length
+    ? garage.categories
+    : garage?.serviceCategories || [];
   const serviceArea = garage?.serviceArea || [];
-  const selectedCategories = garage?.categories || [];
   const availability = garage?.availability || [];
   const workingHours = garage?.workingHours || {};
-
-  useEffect(() => {
-    dispatch(fetchServiceCategories());
-  }, [dispatch]);
-
-  const handleServiceAreaKeyDown = (e) => {
-    const input = e.target.value.trim();
-    if (e.key === "Enter" && input) {
-      e.preventDefault();
-      if (!serviceArea.includes(input)) {
-        onChange("serviceArea", [...serviceArea, input]);
-      }
-      setTimeout(() => {
-        if (e.target.value) e.target.value = "";
-      }, 0);
-    }
-  };
-
-  const handleServiceAreaDelete = (optionToDelete) => {
-    onChange(
-      "serviceArea",
-      serviceArea.filter((option) => option !== optionToDelete)
-    );
-  };
-
-  const handleCategoryDelete = (optionToDelete) => {
-    onChange(
-      "categories",
-      selectedCategories.filter((option) => option !== optionToDelete)
-    );
-  };
-
-  const handleCategoriesChange = (event, value) => {
-    onChange("categories", value);
-  };
-
-  const handleAvailabilityChange = (event, value) => {
-    onChange("availability", value);
-  };
-
-  const handleWorkingHoursChange = (field, value) => {
-    onChange("workingHours", { ...workingHours, [field]: value });
-  };
-
-  const handleLocationChange = (e) => {
-    const [lat, lng] = e.target.value.split(",");
-    onChange("location", {
-      lat: lat && !isNaN(Number(lat)) ? parseFloat(lat) : "",
-      lng: lng && !isNaN(Number(lng)) ? parseFloat(lng) : "",
-    });
-  };
 
   return (
     <Box>
@@ -106,75 +53,40 @@ export default function GarageDetailsForm({
         inputProps={{ maxLength: 64, "aria-label": "Garage Name" }}
       />
 
+      {/* Service Categories */}
       <Autocomplete
         multiple
-        options={categories.map((cat) => cat.name)}
-        loading={loading}
+        options={garage.allCategories || []}
         value={selectedCategories}
-        onChange={handleCategoriesChange}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              color="primary"
-              label={option}
-              {...getTagProps({ index })}
-              key={option}
-              onDelete={() => handleCategoryDelete(option)}
-            />
-          ))
-        }
+        onChange={(_, value) => onChange("categories", value)}
         renderInput={(params) => (
           <TextField
             {...params}
             label="Select Services Offered"
             placeholder="e.g. Battery, Tyres, Towing"
             error={!!errors.categories}
-            helperText={
-              errors.categories || "Choose from admin-defined categories"
-            }
+            helperText={errors.categories}
             fullWidth
             sx={{ mb: 2 }}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {loading ? <CircularProgress size={18} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
           />
         )}
       />
 
+      {/* Service Area */}
       <Autocomplete
         multiple
         freeSolo
         options={[]}
         value={serviceArea}
-        onChange={(e, value) => onChange("serviceArea", value)}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              color="primary"
-              label={option}
-              {...getTagProps({ index })}
-              key={option}
-              onDelete={() => handleServiceAreaDelete(option)}
-            />
-          ))
-        }
+        onChange={(_, value) => onChange("serviceArea", value)}
         renderInput={(params) => (
           <TextField
             {...params}
             label="Service Areas (type and press Enter)"
             error={!!errors.serviceArea}
-            helperText={errors.serviceArea || "Type and press Enter to add"}
+            helperText={errors.serviceArea}
             fullWidth
             sx={{ mb: 2 }}
-            onKeyDown={handleServiceAreaKeyDown}
             inputProps={{
               ...params.inputProps,
               "aria-label": "Service Areas",
@@ -184,44 +96,51 @@ export default function GarageDetailsForm({
         )}
       />
 
-      <TextField
-        label="Location (Latitude,Longitude)"
-        value={
-          garage.location
-            ? `${garage.location.lat || ""},${garage.location.lng || ""}`
-            : ""
-        }
-        onChange={handleLocationChange}
-        error={!!errors.location}
-        helperText={errors.location || "Example: 28.6139,77.2090"}
-        fullWidth
-        sx={{ mb: 2 }}
-        placeholder="28.6139,77.2090"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <RoomIcon color="primary" />
-            </InputAdornment>
-          ),
-        }}
-      />
+      {/* Location */}
+      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+        <TextField
+          label="Location (Latitude,Longitude)"
+          value={
+            garage.location
+              ? `${garage.location.lat || ""},${garage.location.lng || ""}`
+              : ""
+          }
+          onChange={(e) => {
+            const [lat, lng] = e.target.value.split(",");
+            onChange("location", {
+              lat: lat && !isNaN(Number(lat)) ? parseFloat(lat) : "",
+              lng: lng && !isNaN(Number(lng)) ? parseFloat(lng) : "",
+            });
+          }}
+          error={!!errors.location}
+          helperText={errors.location || "Example: 28.6139,77.2090"}
+          fullWidth
+          placeholder="28.6139,77.2090"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <RoomIcon color="primary" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Tooltip title="Pick from map">
+                  <IconButton onClick={onLocationPicker} aria-label="Open Map">
+                    <RoomIcon />
+                  </IconButton>
+                </Tooltip>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
 
+      {/* Available Days */}
       <Autocomplete
         multiple
         options={DAYS}
         value={availability}
-        onChange={handleAvailabilityChange}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              color="secondary"
-              label={option}
-              {...getTagProps({ index })}
-              key={option}
-            />
-          ))
-        }
+        onChange={(_, value) => onChange("availability", value)}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -238,12 +157,15 @@ export default function GarageDetailsForm({
         )}
       />
 
+      {/* Working Hours */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
         <TextField
           label="Opening Time"
           type="time"
           value={workingHours.open || ""}
-          onChange={(e) => handleWorkingHoursChange("open", e.target.value)}
+          onChange={(e) =>
+            onChange("workingHours", { ...workingHours, open: e.target.value })
+          }
           error={!!errors.workingHours}
           helperText={errors.workingHours}
           fullWidth
@@ -252,7 +174,9 @@ export default function GarageDetailsForm({
           label="Closing Time"
           type="time"
           value={workingHours.close || ""}
-          onChange={(e) => handleWorkingHoursChange("close", e.target.value)}
+          onChange={(e) =>
+            onChange("workingHours", { ...workingHours, close: e.target.value })
+          }
           error={!!errors.workingHours}
           helperText={errors.workingHours}
           fullWidth

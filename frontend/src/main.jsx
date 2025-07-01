@@ -24,6 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           hideProgressBar={false}
           newestOnTop
           closeOnClick
+          style={{ zIndex: 15000 }}
           pauseOnHover
           draggable
           theme="colored"
