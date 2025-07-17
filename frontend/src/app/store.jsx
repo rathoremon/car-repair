@@ -7,8 +7,10 @@ import adminReducer from "../features/admin/adminSlice";
 import onboardingReducer from "../features/onboarding/onboardingSlice";
 import serviceCategoryReducer from "../features/serviceCategory/serviceCategorySlice";
 import promotionReducer from "../features/promotion/promotionSlice";
+import providerDashboard from "../features/provider/Dashboard/dashboardSlice";
+import skillReducer from "../features/skill/skillSlice";
 import uiReducer from "../features/ui/uiSlice";
-
+import mechanicsReducer from "../features/provider/mechanic/mechanicsSlice";
 const rootReducer = combineReducers({
   auth: authReducer,
   user: userReducer,
@@ -17,7 +19,10 @@ const rootReducer = combineReducers({
   admin: adminReducer,
   onboarding: onboardingReducer,
   serviceCategory: serviceCategoryReducer,
+  skill: skillReducer,
   promotion: promotionReducer,
+  mechanics: mechanicsReducer,
+  providerDashboard,
   ui: uiReducer,
 });
 

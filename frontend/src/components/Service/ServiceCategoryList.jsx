@@ -149,6 +149,9 @@ const ServiceCategoryList = () => {
               <TableCell>Name</TableCell>
               <TableCell align="center">New</TableCell>
               <TableCell>Description</TableCell>
+              <TableCell>
+                <b>Skills</b>
+              </TableCell>
               <TableCell
                 align="center"
                 onClick={() => toggleSort("defaultDuration")}
@@ -172,14 +175,14 @@ const ServiceCategoryList = () => {
             {loading ? (
               [...Array(6)].map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={8}>
+                  <TableCell colSpan={9}>
                     <Skeleton variant="rectangular" height={22} />
                   </TableCell>
                 </TableRow>
               ))
             ) : categories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={9} align="center">
                   No service categories found.
                 </TableCell>
               </TableRow>
@@ -245,6 +248,25 @@ const ServiceCategoryList = () => {
                         </IconButton>
                       </Stack>
                     </TableCell>
+                    {/* === SKILLS COLUMN === */}
+                    <TableCell sx={{ minWidth: 140, maxWidth: 320 }}>
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                        {(cat.skills || []).map((skill) => (
+                          <Chip
+                            key={skill.id}
+                            label={skill.name}
+                            size="small"
+                            color="primary"
+                            sx={{ mb: 0.3, mr: 0.5, fontWeight: 600 }}
+                          />
+                        ))}
+                        {(cat.skills || []).length === 0 && (
+                          <Typography variant="caption" color="text.secondary">
+                            No skills
+                          </Typography>
+                        )}
+                      </Stack>
+                    </TableCell>
                     <TableCell align="center">
                       <Chip
                         label={`${cat.defaultDuration} min`}
@@ -308,7 +330,7 @@ const ServiceCategoryList = () => {
                   <TableRow>
                     <TableCell
                       style={{ paddingBottom: 0, paddingTop: 0 }}
-                      colSpan={8}
+                      colSpan={9}
                     >
                       <Collapse
                         in={expandedRow === cat.id}
@@ -330,6 +352,38 @@ const ServiceCategoryList = () => {
                           >
                             {cat.notes || "—"}
                           </Typography>
+                          <Box mt={1}>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary"
+                              fontWeight={600}
+                            >
+                              Required Skills:
+                            </Typography>
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              flexWrap="wrap"
+                            >
+                              {(cat.skills || []).map((skill) => (
+                                <Chip
+                                  key={skill.id}
+                                  label={skill.name}
+                                  size="small"
+                                  color="primary"
+                                  sx={{ mb: 0.3, mr: 0.5, fontWeight: 600 }}
+                                />
+                              ))}
+                              {(cat.skills || []).length === 0 && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  No skills
+                                </Typography>
+                              )}
+                            </Stack>
+                          </Box>
                         </Box>
                       </Collapse>
                     </TableCell>

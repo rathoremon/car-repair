@@ -17,6 +17,7 @@ import { login as loginThunk } from "../../features/auth/authThunks";
 import "react-toastify/dist/ReactToastify.css";
 import { auth } from "../../firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { getMechanicRedirect } from "../../utils/getMechanicRedirect"; // Assuming you have this utility function
 
 function useCapsLock(ref) {
   const [capsLock, setCapsLock] = useState(false);
@@ -130,6 +131,18 @@ export default function Login({ onSwitch }) {
       if (user.role === "admin") {
         toast.success(`Welcome back, Admin!`);
         navigate("/admin/dashboard");
+        return;
+      }
+
+      // Mechanic login: Direct dashboard or onboarding logic
+      if (user.role === "mechanic") {
+        toast.success(
+          `Welcome${user.name ? ", " + user.name : ""} (Mechanic)!`
+        );
+        // If you want onboarding/kyc logic:
+        navigate(getMechanicRedirect(user));
+        // Or simple:
+        // navigate("/mechanic/dashboard");
         return;
       }
 

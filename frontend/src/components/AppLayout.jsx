@@ -88,7 +88,7 @@ const AppLayout = ({
             transition: `margin-left ${theme.transitions.duration.short}ms ease-in-out`,
             ml: isDesktop ? `${effectiveSidebarWidth}px` : 0,
             width: "100%",
-            zIndex: 1,
+            zIndex: 0,
             WebkitOverflowScrolling: "touch", // smooth scroll
             willChange: "transform", // hint GPU acceleration
             scrollBehavior: "smooth", // smooth native scrolling

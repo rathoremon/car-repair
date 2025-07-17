@@ -39,6 +39,7 @@ import ProviderOffers from "./pages/provider/OfferManagement";
 import PayoutsDashboard from "./pages/provider/PayoutDashboard";
 import AvailabilitySchedule from "./pages/provider/AvailabilitySchedule";
 import ProviderGarageOnboarding from "./pages/onboarding/provider/ProviderGarageOnboarding.jsx";
+import MechanicsPage from "./pages/provider/MechanicsPage.jsx";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -61,6 +62,9 @@ import BNPLApproval from "./pages/admin/BNPLApproval";
 import ReminderViewer from "./pages/admin/ReminderViewer";
 import FeedbackAnalytics from "./pages/admin/FeedbackAnalytics";
 import ChatTranscriptAnalyzer from "./pages/admin/ChatTranscriptAnalyzer";
+
+// Mechanic Pages
+import MechanicDashboard from "./pages/mechanic/MechanicDashboard.jsx";
 
 // Access Control & Routing
 import { CircularProgress } from "@mui/material";
@@ -219,7 +223,7 @@ export default function App() {
                       {/* <Route path="profile" element={null} /> */}
                       {/* <Route path="pricing" element={null} /> */}
                       {/* <Route path="tier-plans" element={null} /> */}
-                      {/* <Route path="mechanics" element={null} /> */}
+                      <Route path="mechanics" element={<MechanicsPage />} />
                       {/* <Route path="inventory" element={null} /> */}
                       {/* <Route path="chat" element={null} /> */}
                       {/* <Route path="invoices" element={null} /> */}
@@ -308,6 +312,44 @@ export default function App() {
                 </AppLayout>
               </RoleGate>
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mechanic/*"
+          element={
+            <RoleGate allowed={["mechanic"]}>
+              <AppLayout
+                HeaderComponent={
+                  <Header
+                    sidebarOpen={sidebarOpen}
+                    toggleSidebar={() => setSidebarOpen(true)}
+                    title="Trasure Mechanic"
+                  />
+                }
+                SidebarComponent={
+                  <Sidebar
+                    userType="mechanic"
+                    open={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                  />
+                }
+                sidebarOpen={sidebarOpen}
+              >
+                <Routes>
+                  <Route path="dashboard" element={<MechanicDashboard />} />
+                  {/* <Route path="jobs" element={<AssignedJobs />} /> */}
+                  {/* <Route path="job/:id" element={<JobDetail />} /> */}
+                  {/* <Route path="update-status" element={<UpdateWorkStatus />} /> */}
+                  {/* <Route path="chat/provider" element={<ChatProvider />} /> */}
+                  {/* <Route path="chat/customer" element={<ChatCustomer />} /> */}
+                  <Route
+                    path="*"
+                    element={<Navigate to="/mechanic/dashboard" replace />}
+                  />
+                </Routes>
+              </AppLayout>
+            </RoleGate>
           }
         />
 

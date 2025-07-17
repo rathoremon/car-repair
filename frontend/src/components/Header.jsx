@@ -33,8 +33,53 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import CloseIcon from "@mui/icons-material/Close";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
 import InstallMobileRoundedIcon from "@mui/icons-material/InstallMobileRounded";
+import NotificationPopover from "./provider/Dashboard/NotificationPopover";
 
 const MINI_SIDEBAR_WIDTH = 72;
+const providerNotifications = [
+  {
+    id: 1,
+    text: "You have a new booking for Tire Change!",
+    time: "2m ago",
+    type: "booking",
+    unread: true,
+  },
+  {
+    id: 2,
+    text: "Payout of ₹3,200 was credited.",
+    time: "1h ago",
+    type: "payout",
+    unread: true,
+  },
+  {
+    id: 3,
+    text: "Bank details approved.",
+    time: "3h ago",
+    type: "kyc",
+    unread: false,
+  },
+  {
+    id: 4,
+    text: "Customer left a new 5★ review.",
+    time: "6h ago",
+    type: "review",
+    unread: false,
+  },
+  {
+    id: 5,
+    text: "🚨 Urgent: Update KYC before 10th July to avoid payout hold.",
+    time: "Today",
+    type: "alert",
+    unread: true,
+  },
+  {
+    id: 6,
+    text: "Welcome to Trasure – your onboarding is complete!",
+    time: "Yesterday",
+    type: "announcement",
+    unread: false,
+  },
+];
 
 const Header = ({
   sidebarOpen,
@@ -53,7 +98,12 @@ const Header = ({
   const role = useSelector((state) => state.auth.role);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  // Profile menu state
+  let notifications = [];
+  if (role === "provider") notifications = providerNotifications;
+  // else if (role === "admin") notifications = adminNotifications;
+  // else if (role === "customer") notifications = customerNotifications;
+  // etc.
+
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openProfile = Boolean(anchorEl);
   const handleProfileMenu = (event) => setAnchorEl(event.currentTarget);
@@ -70,7 +120,20 @@ const Header = ({
     setMobileSearchOpen(false);
     setSearchValue("");
   };
+  const [notifAnchor, setNotifAnchor] = React.useState(null);
+  const [notifs, setNotifs] = React.useState(notifications); // local state so we can mark as read
+  const [justMarked, setJustMarked] = React.useState(false);
 
+  const unreadCount = notifs.filter((n) => n.unread).length;
+
+  const handleBellClick = (e) => setNotifAnchor(e.currentTarget);
+  const handlePopoverClose = () => setNotifAnchor(null);
+
+  const handleMarkAllRead = () => {
+    setNotifs((prev) => prev.map((n) => ({ ...n, unread: false })));
+    setJustMarked(true);
+    setTimeout(() => setJustMarked(false), 1200);
+  };
   React.useEffect(() => {
     if (mobileSearchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -130,7 +193,7 @@ const Header = ({
         sx={{
           background: "linear-gradient(to right, #4f46e5, #3b82f6, #6366f1)", // Gradient background
           color: "#F9FAFB",
-          zIndex: theme.zIndex.drawer + 1,
+          zIndex: 1,
           px: { xs: 0, sm: 2 },
           height: { xs: 56, sm: 64, md: 64 },
           justifyContent: "center",
@@ -303,7 +366,7 @@ const Header = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  zIndex: 1201,
+                  zIndex: 12,
                   px: 1,
                   background: alpha(theme.palette.primary.main, 0.98),
                   transition: `background ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeInOut}`,
@@ -458,6 +521,7 @@ const Header = ({
                 <IconButton
                   color="inherit"
                   size="small"
+                  onClick={handleBellClick}
                   sx={{
                     bgcolor: alpha(theme.palette.common.white, 0.08),
                     "&:hover": {
@@ -477,6 +541,14 @@ const Header = ({
                 </IconButton>
               </Tooltip>
             )}
+            <NotificationPopover
+              anchorEl={notifAnchor}
+              onClose={handlePopoverClose}
+              notifications={notifs}
+              onMarkAllRead={handleMarkAllRead}
+              unreadCount={unreadCount}
+              justMarked={justMarked}
+            />
             {/* Profile */}
             <Tooltip title="Profile" arrow>
               <IconButton
@@ -547,7 +619,12 @@ const Header = ({
               {/* Notifications and Install in profile menu on mobile */}
               {isMobile && (
                 <>
-                  <MenuItem>
+                  <MenuItem
+                    onClick={(e) => {
+                      setNotifAnchor(e.currentTarget); // This opens popover at this menu item
+                      handleProfileClose(); // Optional: close the profile menu for better UX
+                    }}
+                  >
                     <ListItemIcon>
                       <Badge
                         badgeContent={notificationCount}
@@ -560,6 +637,7 @@ const Header = ({
                     </ListItemIcon>
                     Notifications
                   </MenuItem>
+
                   <MenuItem>
                     <ListItemIcon>
                       <InstallMobileRoundedIcon fontSize="small" />

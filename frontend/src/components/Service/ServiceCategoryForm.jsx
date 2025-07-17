@@ -1,3 +1,4 @@
+// src/components/admin/ServiceCategoryForm.jsx
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -15,6 +16,9 @@ import {
   Checkbox,
   LinearProgress,
   Fade,
+  Autocomplete,
+  Chip,
+  CircularProgress,
 } from "@mui/material";
 import { Add, Close } from "@mui/icons-material";
 import { useFormik } from "formik";
@@ -25,6 +29,7 @@ import {
   updateServiceCategory,
   fetchServiceCategories,
 } from "../../features/serviceCategory/serviceCategoryThunks";
+import { fetchAllSkills } from "../../features/skill/skillThunks";
 import { clearSelectedCategory } from "../../features/serviceCategory/serviceCategorySlice";
 import { toast } from "react-toastify";
 import { useTheme } from "@mui/material/styles";
@@ -36,6 +41,7 @@ const validationSchema = Yup.object({
     .required("Duration is required")
     .min(1, "Must be at least 1 minute"),
   notes: Yup.string().nullable(),
+  skillIds: Yup.array(),
 });
 
 const ServiceCategoryForm = () => {
@@ -44,9 +50,16 @@ const ServiceCategoryForm = () => {
   const selected = useSelector(
     (state) => state.serviceCategory.selectedCategory
   );
+  const { allSkills, loading: skillsLoading } = useSelector(
+    (state) => state.skill
+  );
   const [open, setOpen] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const { selectedCategory } = useSelector((state) => state.serviceCategory);
+
+  useEffect(() => {
+    dispatch(fetchAllSkills());
+  }, [dispatch]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -58,6 +71,7 @@ const ServiceCategoryForm = () => {
       notes: selectedCategory?.notes ?? "",
       isActive: selectedCategory ? selectedCategory.status === "active" : true,
       pinned: selectedCategory?.pinned || false,
+      skillIds: selectedCategory?.skills?.map((s) => s.id) || [],
     },
     validationSchema,
     onSubmit: async (values, { resetForm }) => {
@@ -68,8 +82,9 @@ const ServiceCategoryForm = () => {
         isEmergencyService: values.isEmergencyService,
         notes: values.notes,
         status: values.isActive ? "active" : "inactive",
+        pinned: values.pinned,
+        skillIds: values.skillIds,
       };
-
       try {
         if (selectedCategory) {
           await dispatch(
@@ -100,6 +115,7 @@ const ServiceCategoryForm = () => {
         pinned: selectedCategory.pinned || false,
         notes: selectedCategory.notes ?? "",
         isActive: selectedCategory.status === "active",
+        skillIds: selectedCategory?.skills?.map((s) => s.id) || [],
       });
       setOpen(true);
       setShowNotes(
@@ -197,7 +213,6 @@ const ServiceCategoryForm = () => {
               error={formik.touched.name && Boolean(formik.errors.name)}
               helperText={formik.touched.name && formik.errors.name}
             />
-
             <TextField
               fullWidth
               multiline
@@ -214,7 +229,6 @@ const ServiceCategoryForm = () => {
                 formik.touched.description && formik.errors.description
               }
             />
-
             <TextField
               fullWidth
               type="number"
@@ -231,7 +245,59 @@ const ServiceCategoryForm = () => {
                 formik.touched.defaultDuration && formik.errors.defaultDuration
               }
             />
-
+            {/* SKILLS MULTISELECT */}
+            <Autocomplete
+              multiple
+              id="skillIds"
+              options={allSkills}
+              value={allSkills.filter((s) =>
+                formik.values.skillIds.includes(s.id)
+              )}
+              getOptionLabel={(option) => option.name}
+              filterSelectedOptions
+              disableCloseOnSelect
+              loading={skillsLoading}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_, val) =>
+                formik.setFieldValue(
+                  "skillIds",
+                  val.map((s) => s.id)
+                )
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Required Skills"
+                  placeholder="Select skills required for this service"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {skillsLoading ? (
+                          <CircularProgress color="inherit" size={18} />
+                        ) : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                  error={
+                    formik.touched.skillIds && Boolean(formik.errors.skillIds)
+                  }
+                  helperText={formik.touched.skillIds && formik.errors.skillIds}
+                />
+              )}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    label={option.name}
+                    {...getTagProps({ index })}
+                    color="primary"
+                    key={option.id}
+                    sx={{ fontWeight: 600 }}
+                  />
+                ))
+              }
+            />
             <FormControlLabel
               control={
                 <Checkbox
@@ -247,7 +313,6 @@ const ServiceCategoryForm = () => {
                 </Typography>
               }
             />
-
             <FormControlLabel
               control={
                 <Checkbox
@@ -261,7 +326,6 @@ const ServiceCategoryForm = () => {
                 <Typography fontWeight={600}>Pin this category</Typography>
               }
             />
-
             <FormControlLabel
               control={
                 <Switch
@@ -279,7 +343,6 @@ const ServiceCategoryForm = () => {
                 </Typography>
               }
             />
-
             <Box>
               <Button onClick={() => setShowNotes(!showNotes)} size="small">
                 {showNotes ? "Hide Notes" : "Add Notes"}
@@ -296,7 +359,6 @@ const ServiceCategoryForm = () => {
                 />
               </Collapse>
             </Box>
-
             <Box>
               <LinearProgress
                 variant="determinate"
@@ -313,9 +375,7 @@ const ServiceCategoryForm = () => {
                   : "Fill all required fields"}
               </Typography>
             </Box>
-
             <Divider />
-
             <Stack direction="row" spacing={2} justifyContent="flex-end">
               <Button
                 type="submit"
