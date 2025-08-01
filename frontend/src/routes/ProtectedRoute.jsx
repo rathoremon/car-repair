@@ -22,6 +22,10 @@ export default function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
+  if (location.pathname.startsWith("/mechanic") && activeRole !== "mechanic") {
+    return <Navigate to="/login" replace />;
+  }
+
   if (!user?.isOtpVerified) {
     return <Navigate to="/verify-otp" replace />;
   }

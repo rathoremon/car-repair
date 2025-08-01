@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
-
+import { CircularProgress } from "@mui/material";
 export function RoleGate({ allowed, children, redirect = "/login" }) {
   const { activeRole, hydrated } = useSelector((state) => state.auth);
 

@@ -250,7 +250,7 @@ export default function MechanicList({
       headerAlign: "left",
       filterable: false,
       align: "left",
-      sortable: true,
+      sortable: false,
       renderCell: (params) => (
         <Stack
           direction="row"
@@ -800,22 +800,43 @@ export default function MechanicList({
                     <Typography fontWeight={500}>
                       Temporary password for this mechanic:
                     </Typography>
-                    <Box
-                      sx={{
-                        bgcolor: "#f4f6f8",
-                        px: 2,
-                        py: 1,
-                        borderRadius: 1,
-                        border: "1px dashed #c4c9d6",
-                        fontFamily: "monospace",
-                        fontSize: 18,
-                        fontWeight: 700,
-                        userSelect: "all",
-                        width: "fit-content",
-                      }}
-                    >
-                      {resetPasswordResult.tempPassword}
-                    </Box>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box
+                        sx={{
+                          bgcolor: "#f4f6f8",
+                          px: 2,
+                          py: 1,
+                          borderRadius: 1,
+                          border: "1px dashed #c4c9d6",
+                          fontFamily: "monospace",
+                          fontSize: 18,
+                          fontWeight: 700,
+                          userSelect: "all",
+                          width: "fit-content",
+                        }}
+                      >
+                        {resetPasswordResult.tempPassword}
+                      </Box>
+                      {resetPasswordResult.tempPassword !==
+                        "Same as your provider login password" && (
+                        <Tooltip title="Copy Password">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                resetPasswordResult.tempPassword
+                              );
+                              onShowToast("success", "Password copied!", {
+                                autoClose: 1000,
+                                theme: "colored",
+                              });
+                            }}
+                          >
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
                   </>
                 )}
 

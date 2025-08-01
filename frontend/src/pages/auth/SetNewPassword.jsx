@@ -1,8 +1,16 @@
 import React, { useState, useLayoutEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  useTheme,
+  CircularProgress,
+  Divider,
+} from "@mui/material";
 import { toast } from "react-toastify";
-import { Button, TextField, Box, Typography, Paper } from "@mui/material";
 import { setNewPassword, refreshUser } from "../../features/auth/authThunks";
 import getProviderRedirect from "../../utils/getProviderRedirect";
 
@@ -14,9 +22,9 @@ const SetNewPassword = () => {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const theme = useTheme();
   const role = activeRole || user?.role;
 
-  // 🔐 Detect self-mechanic by checking for dual profile
   const isSelfMechanic =
     role === "mechanic" &&
     user?.hasMechanicProfile &&
@@ -24,9 +32,7 @@ const SetNewPassword = () => {
     !user?.requiresPasswordReset;
 
   useLayoutEffect(() => {
-    if (!user && !loading) {
-      return navigate("/login");
-    }
+    if (!user && !loading) return navigate("/login");
 
     if (
       isSelfMechanic ||
@@ -41,18 +47,12 @@ const SetNewPassword = () => {
     }
   }, [user, role, isSelfMechanic, navigate, loading]);
 
-  if (loading || !user) {
-    return null;
-  }
+  const isFormValid = password.length >= 6 && password === confirm;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!password || password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      toast.error("Passwords do not match.");
+    if (!isFormValid) {
+      toast.error("Passwords must match and be at least 6 characters.");
       return;
     }
 
@@ -65,7 +65,7 @@ const SetNewPassword = () => {
 
       const refreshed = await dispatch(refreshUser()).unwrap();
       if (!refreshed) {
-        toast.error("Session error. Please login again.");
+        toast.error("Session expired. Please login again.");
         return navigate("/login");
       }
 
@@ -81,46 +81,94 @@ const SetNewPassword = () => {
     }
   };
 
+  if (loading || !user) return null;
+
   return (
-    <Box className="flex justify-center items-center min-h-screen p-4 bg-gray-50">
-      <Paper elevation={4} className="p-6 w-full max-w-md">
-        <Typography variant="h5" fontWeight={600} gutterBottom>
+    <Box
+      className="min-h-screen flex items-center justify-center"
+      sx={{
+        backgroundColor:
+          theme.palette.mode === "dark" ? "#101418" : theme.palette.grey[100],
+        px: 2,
+      }}
+    >
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 420,
+          p: 4,
+          borderRadius: 3,
+          backgroundColor:
+            theme.palette.mode === "dark"
+              ? "#1c1f26"
+              : theme.palette.background.paper,
+          boxShadow: 3,
+        }}
+      >
+        <Typography variant="h5" fontWeight={700} gutterBottom>
           Set New Password
         </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
+
+        <Typography variant="body2" color="text.secondary" gutterBottom>
           {role === "mechanic"
-            ? "You're logging in for the first time as a mechanic. Please create your password."
-            : "Please set your new password to continue."}
+            ? "You're logging in for the first time as a mechanic. Set a strong password to continue."
+            : "Secure your account with a new password."}
         </Typography>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+        <Divider sx={{ my: 2 }} />
+
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: 20 }}
+        >
           <TextField
-            type="password"
             label="New Password"
+            type="password"
             fullWidth
             required
+            autoFocus
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            variant="outlined"
+            size="medium"
           />
           <TextField
-            type="password"
             label="Confirm Password"
+            type="password"
             fullWidth
             required
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
+            variant="outlined"
+            size="medium"
           />
           <Button
             type="submit"
-            fullWidth
             variant="contained"
             color="primary"
-            disabled={loading}
+            disabled={!isFormValid || loading}
+            size="large"
+            sx={{ mt: 1, fontWeight: 600 }}
+            fullWidth
           >
-            {loading ? "Saving..." : "Set Password"}
+            {loading ? (
+              <CircularProgress size={22} color="inherit" />
+            ) : (
+              "Set Password"
+            )}
           </Button>
         </form>
-      </Paper>
+
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          align="center"
+          sx={{ mt: 3 }}
+        >
+          Password must be at least 6 characters and match exactly.
+        </Typography>
+      </Box>
     </Box>
   );
 };
