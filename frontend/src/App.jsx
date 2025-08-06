@@ -74,6 +74,8 @@ import { ProviderAccessGuard } from "./hooks/useProviderAccessGuard";
 import ProviderKycPending from "./pages/provider/ProviderKycPending.jsx";
 import SetNewPassword from "./pages/auth/SetNewPassword.jsx";
 import RoleSelector from "./pages/auth/RoleSelector.jsx";
+import ChatWithProvider from "./pages/mechanic/ChatWithProvider.jsx";
+import ChatWithUser from "./pages/mechanic/ChatWithUser.jsx";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -112,7 +114,6 @@ export default function App() {
       {shouldBlockRender ? (
         <div className="flex items-center justify-center h-screen">
           <CircularProgress size={50} />
-          <span> APP</span>
         </div>
       ) : (
         <Routes>
@@ -320,8 +321,8 @@ export default function App() {
             {/* <Route path="jobs" element={<AssignedJobs />} /> */}
             {/* <Route path="job/:id" element={<JobDetail />} /> */}
             {/* <Route path="update-status" element={<UpdateWorkStatus />} /> */}
-            {/* <Route path="chat/provider" element={<ChatProvider />} /> */}
-            {/* <Route path="chat/customer" element={<ChatCustomer />} /> */}
+            <Route path="chat/provider" element={<ChatWithProvider />} />
+            <Route path="chat/customer" element={<ChatWithUser />} />
             <Route
               path="*"
               element={<Navigate to="/mechanic/dashboard" replace />}

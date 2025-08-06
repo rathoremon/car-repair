@@ -22,6 +22,7 @@ Thumbs.db
 # Build files
 dist/
 build/
+backend/[c]onfig
 
 # Temporary files
 *.tmp
@@ -39,7 +40,7 @@ coverage/
 *.env.*
 
 # Firebase service account key
-./backend/config/serviceAccountKey.json
+backend/config/serviceAccountKey.json
 
 # Ignore any local configuration files
 /uploads/

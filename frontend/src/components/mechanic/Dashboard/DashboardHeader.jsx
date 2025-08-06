@@ -11,15 +11,18 @@ import {
   Switch,
   Paper,
 } from "@mui/material";
-import CircleIcon from "@mui/icons-material/Circle";
 import EngineeringIcon from "@mui/icons-material/Engineering";
+import { useSelector } from "react-redux";
 import { format } from "date-fns";
+import RoleSwitch from "../../common/RoleSwitch";
 
-const DashboardHeader = () => {
+const DashboardHeader = ({ currentRole, onToggleConfirm }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const today = format(new Date(), "EEEE, dd MMM yyyy");
   const [online, setOnline] = React.useState(true);
+  const { user } = useSelector((s) => s.auth);
+  console.log(currentRole);
 
   return (
     <Paper
@@ -45,102 +48,82 @@ const DashboardHeader = () => {
         justifyContent="space-between"
         flexWrap="wrap"
       >
-        {/* LEFT: Mechanic Identity */}
+        {/* LEFT */}
         <Grid item xs={12} sm={6}>
           <Stack direction="row" spacing={2} alignItems="center">
             <Avatar
               sx={{
                 width: 56,
                 height: 56,
-                fontSize: 30,
                 bgcolor: theme.palette.primary.main,
-                color: "#fff",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
               }}
             >
-              <EngineeringIcon fontSize="inherit" />
+              <EngineeringIcon fontSize="medium" sx={{ color: "#fff" }} />
             </Avatar>
             <Box>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 600,
-                  lineHeight: 1.3,
-                  fontSize: { xs: "1rem", sm: "1.15rem" },
-                  color: theme.palette.text.primary,
-                }}
-              >
+              <Typography variant="h6" fontWeight={600}>
                 Hello, Mechanic
               </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontSize: "0.875rem", mt: 0.3 }}
-              >
+              <Typography variant="body2" color="text.secondary">
                 Let’s fix some engines today.
+              </Typography>
+              {/* Date */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                justifyContent="left"
+                sx={{ textTransform: "uppercase" }}
+              >
+                {today}
               </Typography>
             </Box>
           </Stack>
         </Grid>
 
-        {/* RIGHT: Date + Status */}
-        <Grid item xs={12} sm={6}>
+        {/* RIGHT */}
+        <Grid item xs={12} sm={6} width={isMobile ? "100%" : "none"}>
           <Stack
             direction={isMobile ? "column" : "row"}
             spacing={isMobile ? 1.5 : 3}
-            alignItems="center"
-            justifyContent={isMobile ? "flex-start" : "flex-end"}
+            justifyContent={isMobile ? "flex-center" : "flex-end"}
             sx={{ textAlign: isMobile ? "left" : "right" }}
+            alignItems="center"
           >
-            {/* Date */}
-            <Box>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  fontWeight: 500,
-                  fontSize: "0.825rem",
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                }}
+            {/* Online Status */}
+            <Stack direction="row" spacing={4.6}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={0.5}
               >
-                {today}
-              </Typography>
-            </Box>
-
-            {/* Status Toggle */}
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <CircleIcon
-                fontSize="small"
-                sx={{
-                  color: online
-                    ? theme.palette.success.main
-                    : theme.palette.grey[400],
-                }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 500,
-                  color: theme.palette.text.secondary,
-                  fontSize: "0.875rem",
-                }}
+                <Switch
+                  checked={online}
+                  onChange={() => setOnline(!online)}
+                  size="small"
+                  color="success"
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {online ? "Online" : "Offline"}
+                </Typography>
+              </Stack>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={2.5}
               >
-                {online ? "Online" : "Offline"}
-              </Typography>
-              <Switch
-                checked={online}
-                onChange={() => setOnline(!online)}
-                size="small"
-                color="success"
-                inputProps={{
-                  "aria-label": "Toggle online status",
-                }}
-                sx={{
-                  transform: "scale(0.95)",
-                }}
-              />
+                {user?.hasMechanicProfile && user?.hasProviderProfile && (
+                  <RoleSwitch
+                    key={currentRole}
+                    currentRole={currentRole}
+                    onToggleConfirm={onToggleConfirm}
+                  />
+                )}
+              </Stack>
             </Stack>
+
+            {/* Role Toggle */}
           </Stack>
         </Grid>
       </Grid>

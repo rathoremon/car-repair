@@ -1,62 +1,83 @@
 // src/pages/provider/MechanicsPage.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
-  Button,
   Typography,
   Stack,
   Paper,
   Slide,
   useTheme,
   useMediaQuery,
+  CircularProgress,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/PersonAddAlt1";
 import GroupIcon from "@mui/icons-material/Group";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import BlockIcon from "@mui/icons-material/Block";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+
 import MechanicList from "../../components/provider/mechanic/MechanicList";
 import MechanicFormDialog from "../../components/provider/mechanic/MechanicFormDialog";
-import { useSelector } from "react-redux";
-import { toast, ToastContainer } from "react-toastify";
-import { ToggleButtonGroup, ToggleButton } from "@mui/material";
-import { useDispatch } from "react-redux";
-import { setActiveRole } from "../../features/auth/authSlice";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
-import { useNavigate, useLocation } from "react-router-dom";
+import RoleSwitch from "../../components/common/RoleSwitch";
+import { setActiveRole } from "../../features/auth/authSlice";
 
 export default function MechanicsPage() {
   const theme = useTheme();
-  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const { list } = useSelector((s) => s.mechanics);
+  const { user, activeRole } = useSelector((s) => s.auth);
 
   const [formOpen, setFormOpen] = useState(false);
   const [mechanicId, setMechanicId] = useState(null);
-  const { user } = useSelector((s) => s.auth);
-  const currentRole = useMemo(
-    () => localStorage.getItem("activeRole") || "provider",
-    []
-  );
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState(null);
-  const dispatch = useDispatch();
+  const [switchingRole, setSwitchingRole] = useState(false);
+  const [displayedRole, setDisplayedRole] = useState(activeRole);
 
-  const confirmToggle = () => {
-    setConfirmOpen(false);
+  useEffect(() => {
+    setDisplayedRole(activeRole);
+  }, [activeRole]);
 
-    // Set role before navigation
-    dispatch(setActiveRole(pendingRole));
-    localStorage.setItem("activeRole", pendingRole);
-
-    if (pendingRole === "provider") navigate("/provider/dashboard");
-    else if (pendingRole === "mechanic") navigate("/mechanic/dashboard");
+  const handleToggleAttempt = (newRole) => {
+    if (!newRole || newRole === activeRole) return;
+    setPendingRole(newRole);
+    setDisplayedRole(newRole); // animate switch
+    setTimeout(() => {
+      setConfirmOpen(true); // show dialog after animation delay
+    }, 300); // should match RoleSwitch thumb transition
   };
 
-  const handleToggleRole = (_, newRole) => {
-    if (!newRole || newRole === currentRole) return;
-    setPendingRole(newRole);
-    setConfirmOpen(true);
+  const handleConfirm = () => {
+    setConfirmOpen(false);
+    setSwitchingRole(true); // this sets loader
+
+    // Delay dispatch+navigation in a batch (after next frame)
+    requestAnimationFrame(() => {
+      dispatch(setActiveRole(pendingRole));
+      localStorage.setItem("activeRole", pendingRole);
+
+      // Small buffer to let Redux apply
+      setTimeout(() => {
+        navigate(
+          pendingRole === "provider"
+            ? "/provider/dashboard"
+            : "/mechanic/dashboard"
+        );
+      }, 10);
+    });
+  };
+
+  const handleCancel = () => {
+    setDisplayedRole(activeRole); // rollback
+    setConfirmOpen(false);
   };
 
   const showToast = (type, message, options) => {
@@ -92,6 +113,27 @@ export default function MechanicsPage() {
     setMechanicId("self");
     setFormOpen(true);
   };
+
+  if (switchingRole) {
+    return (
+      <Box
+        sx={{
+          height: "100vh",
+          width: "100vw",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          bgcolor: "background.default",
+          zIndex: 9999,
+          position: "fixed",
+          top: 0,
+          left: 0,
+        }}
+      >
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -144,62 +186,24 @@ export default function MechanicsPage() {
           >
             Mechanic Management
           </Typography>
+          {/* --- Role Switch --- */}
+          {user?.hasProviderProfile && user?.hasMechanicProfile && (
+            <Slide direction="down" in mountOnEnter unmountOnExit>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  mt: 1,
+                }}
+              >
+                <RoleSwitch
+                  currentRole={displayedRole}
+                  onToggleConfirm={handleToggleAttempt}
+                />
+              </Box>
+            </Slide>
+          )}
         </Stack>
-        {user?.hasProviderProfile && user?.hasMechanicProfile && (
-          <Slide direction="down" in mountOnEnter unmountOnExit>
-            <ToggleButtonGroup
-              value={currentRole}
-              exclusive
-              onChange={handleToggleRole}
-              size="medium"
-              sx={{
-                borderRadius: "999px",
-                overflow: "hidden",
-                boxShadow: "0 3px 12px rgba(0,0,0,0.08)",
-                background:
-                  theme.palette.mode === "dark" ? "#1f2937" : "#ffffff",
-                border: `1px solid ${theme.palette.divider}`,
-                my: 1,
-                mx: "auto",
-              }}
-            >
-              <ToggleButton
-                value="provider"
-                sx={{
-                  textTransform: "none",
-                  px: 3,
-                  py: 1.2,
-                  fontWeight: 700,
-                  border: "none",
-                  color: "text.primary",
-                  "&.Mui-selected": {
-                    background: theme.palette.primary.light,
-                    color: theme.palette.primary.main,
-                  },
-                }}
-              >
-                Provider Module
-              </ToggleButton>
-              <ToggleButton
-                value="mechanic"
-                sx={{
-                  textTransform: "none",
-                  px: 3,
-                  py: 1.2,
-                  fontWeight: 700,
-                  border: "none",
-                  color: "text.primary",
-                  "&.Mui-selected": {
-                    background: theme.palette.primary.light,
-                    color: theme.palette.primary.main,
-                  },
-                }}
-              >
-                Mechanic Module
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Slide>
-        )}
 
         {/* --- Stats --- */}
         <Paper
@@ -241,7 +245,7 @@ export default function MechanicsPage() {
           />
         </Paper>
 
-        {/* --- Mechanic Table --- */}
+        {/* --- Table --- */}
         <MechanicList
           onAddMechanic={openAddMechanic}
           onEditMechanic={openEditMechanic}
@@ -249,7 +253,7 @@ export default function MechanicsPage() {
           onShowToast={showToast}
         />
 
-        {/* --- Dialog --- */}
+        {/* --- Dialogs --- */}
         <MechanicFormDialog
           open={formOpen}
           onClose={() => {
@@ -274,8 +278,8 @@ export default function MechanicsPage() {
           description={`This will open the ${pendingRole} workspace. Do you want to proceed?`}
           confirmText="Switch"
           cancelText="Cancel"
-          onClose={() => setConfirmOpen(false)}
-          onConfirm={confirmToggle}
+          onClose={handleCancel}
+          onConfirm={handleConfirm}
         />
       </Box>
     </Box>
