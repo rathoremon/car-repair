@@ -11,7 +11,6 @@ import {
   Box,
   Stack,
   Autocomplete,
-  useTheme,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
@@ -41,8 +40,6 @@ export default function VehicleFormBlock({
   canDelete,
   errors,
 }) {
-  const theme = useTheme();
-
   const makes = [
     { label: "Maruti", value: "Maruti" },
     { label: "Honda", value: "Honda" },
@@ -51,6 +48,7 @@ export default function VehicleFormBlock({
     { label: "Tata", value: "Tata" },
     { label: "Mahindra", value: "Mahindra" },
   ];
+
   const models =
     {
       Maruti: ["Swift", "Baleno", "WagonR"],
@@ -60,6 +58,10 @@ export default function VehicleFormBlock({
       Tata: ["Nexon", "Harrier", "Tiago"],
       Mahindra: ["XUV700", "Thar", "Scorpio"],
     }[vehicle.make] || [];
+
+  const selectedMakeObj = makes.find((m) => m.value === vehicle.make) || null;
+
+  const selectedModel = models.includes(vehicle.model) ? vehicle.model : null;
 
   return (
     <motion.div
@@ -94,6 +96,7 @@ export default function VehicleFormBlock({
               <IconButton
                 onClick={onDelete}
                 className="hover:animate-shake hover:text-red-600 transition-all"
+                aria-label={`Remove vehicle ${idx + 1}`}
               >
                 <DeleteIcon />
               </IconButton>
@@ -108,11 +111,7 @@ export default function VehicleFormBlock({
           animate="visible"
           variants={{
             hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.1,
-              },
-            },
+            visible: { transition: { staggerChildren: 0.1 } },
           }}
         >
           {/* Make */}
@@ -125,7 +124,8 @@ export default function VehicleFormBlock({
             <Autocomplete
               options={makes}
               getOptionLabel={(option) => option.label}
-              value={makes.find((m) => m.value === vehicle.make) || null}
+              value={selectedMakeObj}
+              isOptionEqualToValue={(opt, val) => opt.value === val.value}
               onChange={(_, value) => onChange(idx, "make", value?.value || "")}
               renderInput={(params) => (
                 <TextField
@@ -135,6 +135,10 @@ export default function VehicleFormBlock({
                   fullWidth
                   error={!!errors.make}
                   helperText={errors.make}
+                  inputProps={{
+                    ...params.inputProps,
+                    autoComplete: "new-password",
+                  }}
                 />
               )}
             />
@@ -150,7 +154,8 @@ export default function VehicleFormBlock({
             <Autocomplete
               options={models}
               getOptionLabel={(option) => option}
-              value={vehicle.model || ""}
+              value={selectedModel}
+              isOptionEqualToValue={(opt, val) => opt === val}
               onChange={(_, value) => onChange(idx, "model", value || "")}
               disabled={!vehicle.make}
               renderInput={(params) => (
@@ -161,6 +166,10 @@ export default function VehicleFormBlock({
                   fullWidth
                   error={!!errors.model}
                   helperText={errors.model}
+                  inputProps={{
+                    ...params.inputProps,
+                    autoComplete: "new-password",
+                  }}
                 />
               )}
             />
@@ -177,7 +186,7 @@ export default function VehicleFormBlock({
               select
               label="Year"
               value={vehicle.year}
-              onChange={(e) => onChange(idx, "year", e.target.value)}
+              onChange={(e) => onChange(idx, "year", Number(e.target.value))}
               variant="outlined"
               fullWidth
               error={!!errors.year}
@@ -216,6 +225,7 @@ export default function VehicleFormBlock({
               inputProps={{
                 maxLength: 10,
                 style: { textTransform: "uppercase", letterSpacing: 2 },
+                "aria-label": `Registration number for vehicle ${idx + 1}`,
               }}
             />
           </motion.div>
@@ -246,7 +256,7 @@ export default function VehicleFormBlock({
               sx={{
                 "& .MuiToggleButton-root": {
                   flex: "0 0 auto",
-                  width: { xs: "140px", sm: "160px" }, // fixed button width for all screen sizes
+                  width: { xs: "140px", sm: "160px" },
                   height: "48px",
                   margin: "4px",
                   borderRadius: "9999px",
@@ -259,10 +269,7 @@ export default function VehicleFormBlock({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  "& svg": {
-                    marginRight: "8px",
-                    fontSize: "1.2rem",
-                  },
+                  "& svg": { marginRight: "8px", fontSize: "1.2rem" },
                   "&.Mui-selected": {
                     bgcolor: "primary.main",
                     color: "#fff",
@@ -279,7 +286,11 @@ export default function VehicleFormBlock({
               }}
             >
               {fuelTypes.map((type) => (
-                <ToggleButton key={type.label} value={type.label}>
+                <ToggleButton
+                  key={type.label}
+                  value={type.label}
+                  aria-label={type.label}
+                >
                   <Box className="flex items-center gap-2">
                     {type.icon}
                     {type.label}

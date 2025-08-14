@@ -37,11 +37,7 @@ import {
 const SIDEBAR_CONFIG = {
   customer: [
     { text: "Home", icon: DashboardIcon, path: "/customer/home" },
-    {
-      text: "Service Request",
-      icon: BuildIcon,
-      path: "/customer/service-request",
-    },
+    { text: "Service Request", icon: BuildIcon, path: "/customer/service" },
     {
       text: "Live Tracking",
       icon: LocationOnIcon,
@@ -54,7 +50,7 @@ const SIDEBAR_CONFIG = {
     },
     { text: "Vehicles", icon: DirectionsCarIcon, path: "/customer/vehicles" },
     { text: "Profile", icon: PersonIcon, path: "/customer/profile" },
-    { text: "Payments", icon: PaymentsIcon, path: "/customer/payments" },
+    { text: "Payments & BNPL", icon: PaymentsIcon, path: "/customer/bnpl" },
     { text: "Reminders", icon: CalendarTodayIcon, path: "/customer/reminders" },
     { text: "Chat Support", icon: ChatIcon, path: "/customer/chat" },
   ],
@@ -63,7 +59,7 @@ const SIDEBAR_CONFIG = {
     {
       text: "Assignments",
       icon: AssignmentIcon,
-      path: "/provider/assignments",
+      path: "/provider/requests",
     },
     { text: "Work Status", icon: WorkIcon, path: "/provider/work-status" },
     {

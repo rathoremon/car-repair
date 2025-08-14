@@ -1,3 +1,4 @@
+// src/pages/onboarding/customer/CustomerVehicleOnboarding.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -14,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography, Skeleton, Fade } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import VehicleFormBlock from "./VehicleFormBlock";
-import ProgressBar from "../shared/ProgressBar";
 import { toast } from "react-toastify";
 
 const emptyVehicle = {
@@ -25,14 +25,16 @@ const emptyVehicle = {
   fuelType: "",
 };
 
-const DRAFT_KEY = "customer_vehicle_onboarding_draft_v1"; // Update key on breaking structure change
+const DRAFT_KEY = "customer_vehicle_onboarding_draft_v1";
 
 export default function CustomerVehicleOnboarding() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const vehiclesFromRedux =
     useSelector((state) => state.onboarding.vehicles) || [];
   const user = useSelector((state) => state.auth.user);
+  const refreshStatus = useSelector((state) => state.auth.refreshStatus);
 
   // ------ RESTORE DRAFT ------
   const [localVehicles, setLocalVehicles] = useState(() => {
@@ -46,17 +48,14 @@ export default function CustomerVehicleOnboarding() {
           });
           return vehicles;
         }
-      } catch (e) {
-        // ignore
-      }
+      } catch {}
     }
     return vehiclesFromRedux.length ? vehiclesFromRedux : [{ ...emptyVehicle }];
   });
 
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Ref to scroll to first error
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const firstErrorRef = useRef(null);
 
   useEffect(() => {
@@ -66,7 +65,6 @@ export default function CustomerVehicleOnboarding() {
 
   // ------ AUTO-SAVE DRAFT ------
   useEffect(() => {
-    // Only save if not submitted yet
     if (user?.role === "customer") {
       localStorage.setItem(
         DRAFT_KEY,
@@ -75,7 +73,6 @@ export default function CustomerVehicleOnboarding() {
     }
   }, [localVehicles, user?.role]);
 
-  // ------ CLEAR DRAFT ------
   const clearDraft = () => {
     localStorage.removeItem(DRAFT_KEY);
     toast.success("Draft cleared!", {
@@ -112,6 +109,7 @@ export default function CustomerVehicleOnboarding() {
     });
   };
 
+  // Validation (unchanged)
   const validateVehicle = (vehicle) => {
     const errs = {};
     if (!vehicle.make) errs.make = "Make is required";
@@ -128,10 +126,27 @@ export default function CustomerVehicleOnboarding() {
     return errs;
   };
 
-  const refreshStatus = useSelector((state) => state.auth.refreshStatus);
+  // Pre-submit dedupe check on reg numbers (client-side to save a round-trip)
+  const findDuplicateRegistrations = (vehicles) => {
+    const seen = new Map();
+    const dupIdx = [];
+    vehicles.forEach((v, i) => {
+      const key = (v.registrationNumber || "").toUpperCase();
+      if (!key) return;
+      if (seen.has(key)) {
+        dupIdx.push(i, seen.get(key));
+      } else {
+        seen.set(key, i);
+      }
+    });
+    return Array.from(new Set(dupIdx)).sort((a, b) => a - b);
+  };
 
   const handleRegisterVehicle = async () => {
-    const newErrors = localVehicles.map(validateVehicle);
+    if (isSubmitting) return;
+
+    // 1) Field-level validation
+    const newErrors = localVehicles.map((v) => validateVehicle(v));
     setErrors(newErrors);
     const firstErrorIndex = newErrors.findIndex((e) => Object.keys(e).length);
     if (firstErrorIndex !== -1) {
@@ -146,12 +161,43 @@ export default function CustomerVehicleOnboarding() {
       return;
     }
 
+    // 2) Dedupe reg numbers
+    const dups = findDuplicateRegistrations(localVehicles);
+    if (dups.length) {
+      setErrors((prev) =>
+        prev.map((e, i) =>
+          dups.includes(i)
+            ? { ...e, registrationNumber: "Duplicate registration number" }
+            : e
+        )
+      );
+      firstErrorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      toast.error("Duplicate registration numbers found", {
+        position: "top-center",
+        autoClose: 2500,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await dispatch(createVehicles(localVehicles)).unwrap();
-      dispatch(setVehicles(localVehicles));
+      // 3) Create vehicles on server (returns persisted rows with IDs)
+      const responses = await dispatch(createVehicles(localVehicles)).unwrap();
+
+      // 4) Store the server responses (not the local draft), so IDs are available
+      dispatch(setVehicles(responses));
+      dispatch(setVehicleStepComplete(true));
+
+      // 5) Mark onboarding complete for customers (backend accepts empty body)
       await dispatch(markOnboardingComplete()).unwrap();
+
+      // 6) Refresh user and clear draft
       await dispatch(refreshUser()).unwrap();
       clearDraft();
+
       toast.success("Vehicle details saved!", {
         position: "top-center",
         autoClose: 2000,
@@ -162,10 +208,12 @@ export default function CustomerVehicleOnboarding() {
         position: "top-center",
         autoClose: 3000,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // ⬇️ New Effect to Navigate after refreshUser success
+  // Navigate after refresh success (unchanged)
   useEffect(() => {
     if (refreshStatus === "succeeded") {
       if (user?.role === "customer") {
@@ -184,22 +232,15 @@ export default function CustomerVehicleOnboarding() {
       position: "bottom-center",
       autoClose: 1500,
     });
-
     setTimeout(() => {
-      toast.dismiss(); // dismiss toast
-      if (user?.role === "customer") {
-        navigate("/customer/home");
-      } else {
-        navigate("/");
-      }
+      if (user?.role === "customer")
+        navigate("/customer/home", { replace: true });
+      else navigate("/", { replace: true });
     }, 800);
   };
 
   return (
     <Box className="w-full flex flex-col min-h-[60vh] bg-[#f9fbff]">
-      {/* Progress */}
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col items-center w-full px-4">
         <Fade in>
           <Typography
@@ -258,7 +299,7 @@ export default function CustomerVehicleOnboarding() {
               variant="outlined"
               color="primary"
               onClick={handleAdd}
-              disabled={localVehicles.length >= 5}
+              disabled={localVehicles.length >= 5 || isSubmitting}
               className="rounded-full px-6 py-2 hover:shadow-lg transition-transform transform hover:scale-105"
             >
               Add Another Vehicle
@@ -274,13 +315,15 @@ export default function CustomerVehicleOnboarding() {
             variant="contained"
             color="primary"
             onClick={handleRegisterVehicle}
+            disabled={isSubmitting}
             className="flex-1 rounded-full text-lg font-semibold py-3 transition-all hover:shadow-xl"
           >
-            Register Vehicle
+            {isSubmitting ? "Saving..." : "Register Vehicle"}
           </Button>
           <Button
             variant="text"
             onClick={handleSkip}
+            disabled={isSubmitting}
             className="flex-1 rounded-full text-lg font-semibold py-3 text-gray-600 hover:text-primary-600"
           >
             Skip for Now

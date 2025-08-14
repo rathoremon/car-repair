@@ -109,7 +109,7 @@ export default function AuthPage({ mode }) {
                   d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7Zm0 9.5A2.5 2.5 0 1 0 12 6a2.5 2.5 0 0 0 0 5.5Z"
                 />
               </svg>
-              <span className="tracking-wide">Trasure</span>
+              <span className="tracking-wide">MechanIQ</span>
             </h2>
             <p className="text-xs md:text-sm font-medium opacity-90 mb-4">
               Your one-stop marketplace for car repair and maintenance.
@@ -137,7 +137,7 @@ export default function AuthPage({ mode }) {
           </div>
           <div className="mt-6 text-xs text-gray-400 text-center">
             <span>
-              &copy; {new Date().getFullYear()} Trasure. All rights reserved.
+              &copy; {new Date().getFullYear()} MechanIQ. All rights reserved.
             </span>
           </div>
           <div className="absolute bottom-3 right-3 opacity-20 animate-[carMove_4s_ease-in-out_infinite_alternate] text-4xl md:text-5xl pointer-events-none select-none">

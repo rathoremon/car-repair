@@ -12,9 +12,9 @@ import {
 } from "@mui/material";
 import { Refresh, CloudDownload } from "@mui/icons-material";
 import { fetchAdminServiceCategories } from "../../features/serviceCategory/serviceCategoryThunks";
-import ServiceCategorySearchBar from "../../components/Service/ServiceCategorySearchBar";
-import ServiceCategoryForm from "../../components/Service/ServiceCategoryForm";
-import ServiceCategoryList from "../../components/Service/ServiceCategoryList";
+import ServiceCategorySearchBar from "../../components/ServiceCategory/ServiceCategorySearchBar";
+import ServiceCategoryForm from "../../components/ServiceCategory/ServiceCategoryForm";
+import ServiceCategoryList from "../../components/ServiceCategory/ServiceCategoryList";
 import { toast } from "react-toastify";
 
 const ServiceCategoryMgmt = () => {

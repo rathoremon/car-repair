@@ -24,37 +24,22 @@ import {
   LocalGasStationOutlined as FuelIcon,
 } from "@mui/icons-material";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import isBetween from "dayjs/plugin/isBetween";
+import { getVehiclePhotoUrl } from "../../utils/media";
 
-dayjs.extend(relativeTime);
-dayjs.extend(isBetween);
-
-// ---------------------- Date Parsing Helper ----------------------
-const parseDate = (dateStr) => {
-  const parsed = dayjs(dateStr, "DD-MM-YYYY", true);
-  return parsed.isValid() ? parsed : null;
+const parseDate = (s) => {
+  if (!s) return null;
+  // both "YYYY-MM-DD" and "DD-MM-YYYY"
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return dayjs(s);
+  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
+    const [d, m, y] = s.split("-");
+    return dayjs(`${y}-${m}-${d}`);
+  }
+  return null;
 };
 
-// ---------------------- Compliance Score Logic ----------------------
-const calculateComplianceScore = (vehicle) => {
-  const now = dayjs();
-  const insuranceDate = parseDate(vehicle.insuranceExpiryDate);
-  const pucDate = parseDate(vehicle.pucValidityDate);
-  const serviceDate = parseDate(vehicle.nextServiceDueDate);
-
-  let validCount = 0;
-  if (insuranceDate && insuranceDate.isAfter(now)) validCount++;
-  if (pucDate && pucDate.isAfter(now)) validCount++;
-  if (serviceDate && serviceDate.isAfter(now)) validCount++;
-
-  return validCount * 33;
-};
-
-// ---------------------- Reminder Days Calculation ----------------------
-const daysUntil = (dateStr) => {
-  const parsed = parseDate(dateStr);
-  return parsed ? parsed.diff(dayjs(), "day") : null;
+const daysUntil = (s) => {
+  const d = parseDate(s);
+  return d ? d.diff(dayjs(), "day") : null;
 };
 
 const oilChangeDueInKM = (v) => {
@@ -66,25 +51,39 @@ const oilChangeDueInKM = (v) => {
 const getChipColor = (days) => {
   if (days === null) return "default";
   if (days < 0) return "error";
-  if (days < 15) return "error";
   if (days < 45) return "warning";
   return "success";
 };
-
-const getChipLabel = (days, type) => {
-  if (days === null) return `N/A ${type}`;
-  if (days < 0) return `Overdue ${type}`;
-  if (days === 0) return `Due Today ${type}`;
-  return `In ${days}d ${type}`;
+const getChipLabel = (days, label) => {
+  if (days === null) return `N/A ${label}`;
+  if (days < 0) return `Overdue ${label}`;
+  if (days === 0) return `Due Today ${label}`;
+  return `In ${days}d ${label}`;
 };
 
-// ---------------------- Main Component ----------------------
-const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
+function complianceScore(v) {
+  const now = dayjs();
+  const checks = [
+    parseDate(v.insuranceExpiryDate),
+    parseDate(v.pucValidityDate),
+    parseDate(v.nextServiceDueDate),
+  ];
+  const validCount = checks.reduce(
+    (acc, d) => acc + (d && d.isAfter(now) ? 1 : 0),
+    0
+  );
+  return validCount * 33;
+}
+
+export default function VehicleSummary({ vehicle, onEdit, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const compliance = calculateComplianceScore(vehicle);
+  const photoSrc = getVehiclePhotoUrl(vehicle);
+  const hasPhoto = !!photoSrc && !photoSrc.includes("placeholder-image");
+
+  const compliance = complianceScore(vehicle);
   const complianceColor =
     compliance === 100 ? "success" : compliance >= 66 ? "warning" : "error";
   const complianceLabel =
@@ -94,11 +93,6 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
   const pucDays = daysUntil(vehicle.pucValidityDate);
   const serviceDays = daysUntil(vehicle.nextServiceDueDate);
   const oilDueKM = oilChangeDueInKM(vehicle);
-
-  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
-
-  const parsedServiceDate = parseDate(vehicle.lastServiceDate);
 
   return (
     <Box
@@ -117,7 +111,7 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
         alignItems="center"
         justifyContent="space-between"
       >
-        {/* Left: Avatar */}
+        {/* Avatar */}
         <Grid
           item
           xs={12}
@@ -128,7 +122,7 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
         >
           <Avatar
             variant="rounded"
-            src={vehicle.vehiclePhotoUrl || ""}
+            src={hasPhoto ? photoSrc : undefined}
             sx={{
               width: 90,
               height: 90,
@@ -137,21 +131,21 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
               bgcolor: "#e3f2fd",
             }}
           >
-            {!vehicle.vehiclePhotoUrl && <CarIcon fontSize="large" />}
+            {!hasPhoto && <CarIcon fontSize="large" />}
           </Avatar>
         </Grid>
 
-        {/* Center: Vehicle Info */}
+        {/* Info */}
         <Grid item xs={12} sm={6} md={7}>
           <Stack spacing={0.6}>
             <Typography variant="h6" fontWeight="bold">
-              {vehicle.vehicleMake} {vehicle.vehicleModel}{" "}
+              {vehicle.make} {vehicle.model}{" "}
               <Typography
                 component="span"
                 variant="body2"
                 color="text.secondary"
               >
-                ({vehicle.vehicleYear})
+                ({vehicle.year})
               </Typography>
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -163,29 +157,30 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
               color="primary"
               sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
             >
-              <FuelIcon fontSize="small" /> Oil Change:{" "}
+              <FuelIcon fontSize="small" /> Fuel:{" "}
+              <strong>{vehicle.fuelType || "N/A"}</strong> • Oil Change:{" "}
               <strong>
-                {oilDueKM === null
+                {oilDueKM == null
                   ? "N/A"
                   : oilDueKM <= 0
                   ? "Overdue"
                   : `In ${oilDueKM} KM`}
               </strong>
             </Typography>
-            {parsedServiceDate && (
+            {vehicle.lastServiceDate && (
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
               >
                 <CalendarIcon fontSize="inherit" /> Last Serviced:{" "}
-                {parsedServiceDate.format("DD MMM, YYYY")}
+                {parseDate(vehicle.lastServiceDate)?.format("DD MMM, YYYY")}
               </Typography>
             )}
           </Stack>
         </Grid>
 
-        {/* Right: Chips & Actions */}
+        {/* Right actions */}
         <Grid item xs={12} sm={4} md={3.5}>
           <Stack
             direction={{ xs: "column", sm: "row", md: "column" }}
@@ -230,7 +225,7 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
                 <Tooltip
                   key={label}
                   title={
-                    days === null
+                    days == null
                       ? `${label} status unknown`
                       : `${label} ${days < 0 ? "was due" : "due"} in ${Math.abs(
                           days
@@ -243,11 +238,9 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
                     icon={<CalendarIcon fontSize="small" />}
                     size="small"
                     sx={{
-                      fontWeight: 400,
                       px: 1.2,
                       fontSize: "0.7rem",
                       minWidth: 110,
-                      justifyContent: "flex-start",
                       borderRadius: 0.3,
                     }}
                   />
@@ -256,32 +249,30 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
             </Stack>
 
             <Box sx={{ alignSelf: { xs: "flex-start", sm: "flex-end" } }}>
-              <IconButton onClick={handleMenuOpen}>
+              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
                 <MoreVert />
               </IconButton>
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
+                onClose={() => setAnchorEl(null)}
               >
                 <MenuItem
                   onClick={() => {
-                    handleMenuClose();
+                    setAnchorEl(null);
                     onEdit(vehicle);
                   }}
                 >
-                  <Edit fontSize="small" sx={{ mr: 1 }} />
-                  Edit Vehicle
+                  <Edit fontSize="small" sx={{ mr: 1 }} /> Edit Vehicle
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    handleMenuClose();
+                    setAnchorEl(null);
                     onDelete(vehicle);
                   }}
                   sx={{ color: "error.main" }}
                 >
-                  <Delete fontSize="small" sx={{ mr: 1 }} />
-                  Delete Vehicle
+                  <Delete fontSize="small" sx={{ mr: 1 }} /> Delete Vehicle
                 </MenuItem>
               </Menu>
             </Box>
@@ -290,6 +281,4 @@ const VehicleSummary = ({ vehicle, onEdit, onDelete }) => {
       </Grid>
     </Box>
   );
-};
-
-export default VehicleSummary;
+}

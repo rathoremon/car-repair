@@ -88,13 +88,20 @@ export const removeGarageImage = createAsyncThunk(
 );
 
 // Create vehicles
+// --- PATCHES ONLY ---
+
 export const createVehicles = createAsyncThunk(
   "onboarding/createVehicles",
   async (vehicles, { rejectWithValue }) => {
     try {
       const responses = [];
       for (const vehicle of vehicles) {
-        const res = await api.post("/api/vehicles", vehicle);
+        const payload = { ...vehicle };
+        if (payload.registrationNumber)
+          payload.registrationNumber = String(
+            payload.registrationNumber
+          ).toUpperCase();
+        const res = await api.post("/api/vehicles", payload);
         responses.push(res.data.data);
       }
       return responses;
@@ -147,14 +154,14 @@ export const uploadProviderDocs = createAsyncThunk(
   }
 );
 
-// Mark onboarding complete
+// If providerId is provided, backend can use it; if not, backend should mark the current user onboardingComplete
 export const markOnboardingComplete = createAsyncThunk(
   "onboarding/markOnboardingComplete",
-  async ({ providerId }, { rejectWithValue }) => {
+  async (args = {}, { rejectWithValue }) => {
     try {
-      const res = await api.patch("/api/user/onboarding-complete", {
-        providerId,
-      });
+      const { providerId = null } = args;
+      const body = providerId ? { providerId } : {};
+      const res = await api.patch("/api/user/onboarding-complete", body);
       return res.data;
     } catch (err) {
       return rejectWithValue(

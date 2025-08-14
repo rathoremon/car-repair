@@ -72,7 +72,7 @@ const ServiceHighlights = () => (
         transition={{ duration: 0.8 }}
       >
         <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-800 mb-6 leading-tight">
-          <span className="text-indigo-600">Why</span> Trasure?
+          <span className="text-indigo-600">Why</span> MechanIQ?
         </h2>
         <p className="text-lg text-gray-500 max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
           Elevating your journey — fast, transparent, eco-friendly, and

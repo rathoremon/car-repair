@@ -77,7 +77,7 @@ const statData = [
     label: "Earnings (₹)",
     value: 126700,
     icon: <AttachMoney color="primary" fontSize="medium" />,
-    tooltip: "Total earnings from Trasure",
+    tooltip: "Total earnings from MechanIQ",
     currency: true,
     trend: +9,
     color: "#ede7f6",

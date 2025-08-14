@@ -14,15 +14,8 @@ import {
 } from "@mui/material";
 import { CheckCircle, Cancel, ZoomOutMap } from "@mui/icons-material";
 import { toast } from "react-toastify";
+import { isImage, isPDF, buildDocUrl } from "../../../utils/media";
 
-const DOCUMENTS_BASE_URL =
-  import.meta.env.VITE_DOCUMENTS_URL ||
-  "http://localhost:5000/uploads/documents/";
-
-const getFileName = (path) => path?.split("\\").pop().split("/").pop();
-const isImage = (filePath) =>
-  /\.(jpeg|jpg|png|webp|gif)$/i.test(filePath || "");
-const isPDF = (filePath) => /\.pdf$/i.test(filePath || "");
 const THUMB_HEIGHT = 80;
 
 const statusColors = {
@@ -60,8 +53,7 @@ const DocumentViewer = ({
         >
           <CardMedia
             component="img"
-            src={DOCUMENTS_BASE_URL + getFileName(doc.filePath)}
-            alt={doc.type}
+            src={buildDocUrl(doc.filePath)}
             sx={{
               width: "auto",
               height: "68px",
@@ -265,7 +257,7 @@ const DocumentViewer = ({
         >
           {isImage(doc.filePath) ? (
             <img
-              src={DOCUMENTS_BASE_URL + getFileName(doc.filePath)}
+              src={buildDocUrl(doc.filePath)}
               alt={doc.type}
               style={{
                 width: "auto",
@@ -278,7 +270,7 @@ const DocumentViewer = ({
             />
           ) : isPDF(doc.filePath) ? (
             <iframe
-              src={DOCUMENTS_BASE_URL + getFileName(doc.filePath)}
+              src={buildDocUrl(doc.filePath)}
               style={{
                 width: "98vw",
                 height: "92vh",

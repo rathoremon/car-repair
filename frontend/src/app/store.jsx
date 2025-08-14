@@ -11,15 +11,19 @@ import providerDashboard from "../features/provider/Dashboard/dashboardSlice";
 import skillReducer from "../features/skill/skillSlice";
 import uiReducer from "../features/ui/uiSlice";
 import mechanicsReducer from "../features/provider/mechanic/mechanicsSlice";
+import serviceReducer from "../features/service/serviceSlice";
+import vehiclesReducer from "../features/customer/vehicles/vehicleSlice";
 const rootReducer = combineReducers({
   auth: authReducer,
   user: userReducer,
+  vehicles: vehiclesReducer,
   provider: providerReducer,
   mechanic: mechanicReducer,
   admin: adminReducer,
   onboarding: onboardingReducer,
   serviceCategory: serviceCategoryReducer,
   skill: skillReducer,
+  service: serviceReducer,
   promotion: promotionReducer,
   mechanics: mechanicsReducer,
   providerDashboard,

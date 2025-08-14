@@ -57,7 +57,7 @@ const TrustFactors = () => (
     {/* Title */}
     <div className="text-center mb-20 px-6">
       <h2 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-6">
-        Why Trust <span className="text-indigo-400">Trasure</span>
+        Why Trust <span className="text-indigo-400">MechanIQ</span>
       </h2>
       <p className="text-lg text-gray-300 max-w-2xl mx-auto font-medium">
         We bring premium car services — with the trust of 10,000+ customers.

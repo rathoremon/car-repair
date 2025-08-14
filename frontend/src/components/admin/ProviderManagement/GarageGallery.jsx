@@ -33,9 +33,8 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { toast } from "react-toastify";
-
+import { getImageUrl } from "../../../utils/media";
 // Helper functions & constants
-const getFileName = (path) => path?.split("\\").pop().split("/").pop();
 const statusColors = {
   approved: "success",
   pending: "warning",
@@ -54,8 +53,7 @@ const cardVariants = {
     transition: { type: "spring", stiffness: 70, damping: 18 },
   },
 };
-const getImageUrl = (img) =>
-  `http://localhost:5000/uploads/documents/${getFileName(img.filePath)}`;
+
 const DEFAULT_THUMB_HEIGHT = { xs: 98, sm: 126, md: 72 };
 const THUMB_RADIUS = 0.3;
 const CARD_RADIUS = 0.3;

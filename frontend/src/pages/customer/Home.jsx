@@ -4,7 +4,7 @@ import HeroSection from "../../components/Home/HeroSection";
 import QuickActionsGrid from "../../components/Home/QuickActionsGrid"; // Service Categories
 import ServiceHighlights from "../../components/Home/ServiceHighlights"; // Why Choose Us
 import HowItWorks from "../../components/Home/HowItWorks"; // Journey
-import TrustFactors from "../../components/Home/TrustFactors"; // Why Trust Trasure
+import TrustFactors from "../../components/Home/TrustFactors"; // Why Trust MechanIQ
 import TestimonialsCarousel from "../../components/Home/TestimonialsCarousel"; // Customer Testimonials
 import BlogSnippets from "../../components/Home/BlogSnippets"; // Blog Tips
 import GetStartedCTA from "../../components/Home/GetStartedCTA"; // Final Call to Action
@@ -40,7 +40,7 @@ const Home = () => {
   return (
     <main
       className="font-sans bg-[#f0f4ff] min-h-screen transition-colors duration-300"
-      aria-label="Trasure Customer Home Page"
+      aria-label="MechanIQ Customer Home Page"
       role="main"
     >
       {/* Hero Section */}
@@ -72,9 +72,9 @@ const Home = () => {
         </section>
       </div>
 
-      {/* Why Choose Trasure (Highlights) */}
+      {/* Why Choose MechanIQ (Highlights) */}
       <section
-        aria-label="Why Choose Trasure"
+        aria-label="Why Choose MechanIQ"
         className="mx-auto"
         role="region"
       >

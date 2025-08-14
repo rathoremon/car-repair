@@ -40,11 +40,10 @@ const FAQS = [
     a: "Click the Training Guide button below for quick-start videos and checklists.",
   },
 ];
-
-const onboardingUrl = "https://trasure.com/onboarding-guide";
+const onboardingUrl = "https://MechanIQ.com/onboarding-guide";
 const supportPhone = "+91-9876543210";
 const whatsAppLink = "https://wa.me/919876543210";
-const supportMail = "support@trasure.com";
+const supportMail = "support@MechanIQ.com";
 
 export default function SupportBox() {
   const [faqOpen, setFaqOpen] = useState(false);
@@ -112,7 +111,7 @@ export default function SupportBox() {
                   mb: 0.1,
                 }}
               >
-                Trasure Provider Support
+                MechanIQ Provider Support
               </Typography>
               <Stack direction="row" alignItems="center" spacing={1}>
                 <Box

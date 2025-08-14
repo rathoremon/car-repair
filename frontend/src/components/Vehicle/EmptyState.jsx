@@ -19,7 +19,7 @@ const EmptyState = ({ onAddVehicle }) => {
         No Vehicles Added Yet
       </Typography>
       <Typography variant="body1" mt={2} mb={4} color="textSecondary">
-        Manage your fleet with Trasure. Stay compliant, stay informed.
+        Manage your fleet with MechanIQ. Stay compliant, stay informed.
       </Typography>
       <Button
         variant="contained"

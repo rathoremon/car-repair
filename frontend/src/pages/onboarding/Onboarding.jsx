@@ -36,7 +36,7 @@ const Onboarding = () => {
         toast.warning(
           "Your previous onboarding was rejected. Please re-submit the correct details."
         );
-      }, 1000); // Prevent race with MUI mount
+      }, 1000);
     }
   }, [loading, user, navigate]);
 

@@ -74,7 +74,7 @@ const providerNotifications = [
   },
   {
     id: 6,
-    text: "Welcome to Trasure – your onboarding is complete!",
+    text: "Welcome to MechanIQ – your onboarding is complete!",
     time: "Yesterday",
     type: "announcement",
     unread: false,
@@ -276,7 +276,7 @@ const Header = ({
                 ...theme.typography.subtitle1,
               }}
             >
-              Trasure
+              MechanIQ
             </Typography>
           </Box>
           {/* Center: Search Bar */}

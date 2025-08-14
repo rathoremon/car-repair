@@ -1,48 +1,34 @@
 import React from "react";
 import { Typography, Divider, Stack, Grid, Box } from "@mui/material";
 
-// Helper component for displaying a label-value pair
 const InfoItem = ({ label, value }) => (
   <Stack spacing={0.5}>
     <Typography variant="caption" color="textSecondary">
       {label}
     </Typography>
-    {/* Display value or a dash if value is falsy (e.g., null, undefined, empty string) */}
-    <Typography variant="body1" fontWeight="500">
+    <Typography variant="body1" fontWeight={500}>
       {value || "—"}
     </Typography>
   </Stack>
 );
 
-const VehicleDetails = ({ vehicle }) => {
-  // Helper to format combined date/KM information or return '-' if data is incomplete
-  const formatServiceInfo = (date, km) => {
-    if (date && km) {
-      return `${date} at ${km} KM`;
-    } else if (date) {
-      return date;
-    } else if (km) {
-      return `${km} KM`;
-    }
-    return "—";
-  };
+const fmtService = (date, km) => {
+  if (date && km) return `${date} at ${km} KM`;
+  if (date) return date;
+  if (km) return `${km} KM`;
+  return "—";
+};
 
-  // Helper to format validity periods or return '-' if data is incomplete
-  const formatValidityPeriod = (startDate, expiryDate) => {
-    if (startDate && expiryDate) {
-      return `${startDate} to ${expiryDate}`;
-    } else if (startDate) {
-      return `From ${startDate}`;
-    } else if (expiryDate) {
-      return `Till ${expiryDate}`;
-    }
-    return "—";
-  };
+const fmtValidity = (start, end) => {
+  if (start && end) return `${start} to ${end}`;
+  if (start) return `From ${start}`;
+  if (end) return `Till ${end}`;
+  return "—";
+};
 
+export default function VehicleDetails({ vehicle }) {
   return (
-    // Main container stack for consistent vertical spacing
     <Stack spacing={{ xs: 4, md: 6 }} mt={2}>
-      {/* Vehicle & Ownership Details */}
       <Box>
         <Divider sx={{ mb: 3 }} />
         <Typography
@@ -81,7 +67,6 @@ const VehicleDetails = ({ vehicle }) => {
         </Grid>
       </Box>
 
-      {/* Insurance & Certificates */}
       <Box>
         <Divider sx={{ mb: 3 }} />
         <Typography
@@ -106,7 +91,6 @@ const VehicleDetails = ({ vehicle }) => {
             <InfoItem label="Insurance Type" value={vehicle.insuranceType} />
           </Grid>
           <Grid item xs={12} md={6}>
-            {/* Ensure premium amount is formatted correctly */}
             <InfoItem
               label="Premium Amount"
               value={vehicle.premiumAmount ? `₹${vehicle.premiumAmount}` : "—"}
@@ -115,7 +99,7 @@ const VehicleDetails = ({ vehicle }) => {
           <Grid item xs={12} md={6}>
             <InfoItem
               label="Insurance Validity"
-              value={formatValidityPeriod(
+              value={fmtValidity(
                 vehicle.insuranceStartDate,
                 vehicle.insuranceExpiryDate
               )}
@@ -145,7 +129,6 @@ const VehicleDetails = ({ vehicle }) => {
         </Grid>
       </Box>
 
-      {/* Service & Maintenance */}
       <Box>
         <Divider sx={{ mb: 3 }} />
         <Typography
@@ -160,16 +143,13 @@ const VehicleDetails = ({ vehicle }) => {
           <Grid item xs={12} md={6}>
             <InfoItem
               label="Last Service"
-              value={formatServiceInfo(
-                vehicle.lastServiceDate,
-                vehicle.lastServiceKM
-              )}
+              value={fmtService(vehicle.lastServiceDate, vehicle.lastServiceKM)}
             />
           </Grid>
           <Grid item xs={12} md={6}>
             <InfoItem
               label="Next Service"
-              value={formatServiceInfo(
+              value={fmtService(
                 vehicle.nextServiceDueDate,
                 vehicle.nextServiceDueKM
               )}
@@ -178,10 +158,7 @@ const VehicleDetails = ({ vehicle }) => {
           <Grid item xs={12} md={6}>
             <InfoItem
               label="Oil Change"
-              value={formatServiceInfo(
-                vehicle.oilChangeDate,
-                vehicle.oilChangeKM
-              )}
+              value={fmtService(vehicle.oilChangeDate, vehicle.oilChangeKM)}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -221,6 +198,4 @@ const VehicleDetails = ({ vehicle }) => {
       </Box>
     </Stack>
   );
-};
-
-export default VehicleDetails;
+}

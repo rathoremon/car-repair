@@ -8,6 +8,7 @@ import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import PaymentOutlinedIcon from "@mui/icons-material/PaymentOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { styled } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 // Actions list with correct icons + labels + badges
 const actions = [
@@ -16,30 +17,35 @@ const actions = [
     icon: <DirectionsCarFilledOutlinedIcon fontSize="inherit" />,
     badgeContent: 0,
     color: "linear-gradient(135deg, #6EE7B7, #3B82F6)", // Teal to Blue
+    to: "/customer/service/create",
   },
   {
     label: "My Vehicles",
     icon: <DirectionsRunOutlinedIcon fontSize="inherit" />,
     badgeContent: 0,
     color: "linear-gradient(135deg, #A78BFA, #6366F1)", // Purple to Indigo
+    to: "/customer/vehicles",
   },
   {
     label: "Service History",
     icon: <HistoryEduOutlinedIcon fontSize="inherit" />,
     badgeContent: 0,
     color: "linear-gradient(135deg, #F472B6, #FB7185)", // Pink to Red
+    to: "/customer/service-history",
   },
   {
     label: "Live Tracking",
     icon: <MapOutlinedIcon fontSize="inherit" />,
     badgeContent: 1,
     color: "linear-gradient(135deg, #34D399, #10B981)", // Green
+    to: "/customer/live-tracking",
   },
   {
     label: "Payments & BNPL",
     icon: <PaymentOutlinedIcon fontSize="inherit" />,
     badgeContent: 2,
     color: "linear-gradient(135deg, #FBBF24, #F59E0B)", // Amber
+    to: "/customer/bnpl",
   },
   {
     label: "Emergency SOS",
@@ -47,6 +53,7 @@ const actions = [
     badgeContent: 3,
     color: "linear-gradient(135deg, #F43F5E, #EF4444)", // Red
     pulse: true,
+    to: "/customer/service/create?sos=1",
   },
 ];
 
@@ -74,6 +81,7 @@ const ActionCircle = styled(Box)(({ color }) => ({
 
 const QuickActionsGrid = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   return (
     <Box
@@ -101,6 +109,9 @@ const QuickActionsGrid = () => {
           whileTap={{ scale: 0.95 }}
           role="button"
           aria-label={action.label}
+          tabIndex={0}
+          onClick={() => navigate(action.to)}
+          onKeyDown={(e) => e.key === "Enter" && navigate(action.to)}
           style={{
             display: "flex",
             flexDirection: "column",

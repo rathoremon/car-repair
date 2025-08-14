@@ -13,6 +13,8 @@ import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
+
+import { getImageUrl } from "../../../utils/media";
 import {
   uploadGarageImages,
   removeGarageImage,
@@ -22,24 +24,6 @@ import {
   setGarageImages,
 } from "../../../features/onboarding/onboardingSlice";
 
-const DOCUMENTS_BASE_URL =
-  import.meta.env.VITE_DOCUMENTS_URL ||
-  "http://localhost:5000/uploads/documents/";
-
-const getFileName = (path) => {
-  // Always just the filename, even if Windows/absolute
-  return path ? path.split(/[\\/]/).pop() : "";
-};
-const getImageUrl = (img) => {
-  if (!img) return "/placeholder-image.png";
-  if (img.previewUrl) return img.previewUrl;
-  if (img.filePath) {
-    // Get just the filename, ignore all directories
-    const filename = getFileName(img.filePath);
-    return `${DOCUMENTS_BASE_URL}${filename}`;
-  }
-  return "/placeholder-image.png";
-};
 const RECOMMENDED_ANGLES = [
   "Front View",
   "Side View",

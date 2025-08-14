@@ -11,15 +11,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ImageIcon from "@mui/icons-material/Image";
-
-const DOCUMENTS_BASE_URL =
-  import.meta.env.VITE_DOCUMENTS_URL ||
-  "http://localhost:5000/uploads/documents/";
-
-const getFileName = (path) => (path ? path.split(/[\\/]/).pop() : "");
-
-const isImage = (name = "") => /\.(jpeg|jpg|png|webp|gif)$/i.test(name);
-const isPDF = (name = "") => /\.pdf$/i.test(name);
+import { getImageUrl, isImage, isPDF, getFileName } from "../../../utils/media";
 
 export default function FileUploadZone({
   label,
@@ -34,16 +26,6 @@ export default function FileUploadZone({
   multiple = false,
 }) {
   const inputRef = useRef();
-
-  const getFileUrl = (file) => {
-    if (!file) return "";
-    if (file.previewUrl) return file.previewUrl;
-    if (file.filePath) {
-      const fileName = getFileName(file.filePath);
-      return `${DOCUMENTS_BASE_URL}${fileName}`;
-    }
-    return "";
-  };
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -100,7 +82,8 @@ export default function FileUploadZone({
         display="block"
         mb={1}
       >
-        {accept?.replaceAll(".", "").toUpperCase()} up to {maxSizeMB}MB
+        {(accept ? accept.replaceAll(".", "") : "files").toUpperCase()} up to{" "}
+        {maxSizeMB}MB
       </Typography>
 
       {/* Responsive, never-overflowing grid */}
@@ -122,7 +105,7 @@ export default function FileUploadZone({
             file.originalName ||
             getFileName(file.filePath) ||
             "File";
-          const url = getFileUrl(file);
+          const url = getImageUrl(file);
 
           return (
             <Paper

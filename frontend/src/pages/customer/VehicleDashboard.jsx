@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -7,83 +7,60 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
-import AddVehicleForm from "../../components/Vehicle/AddVehicleForm";
-import VehicleCard from "../../components/Vehicle/VehicleCard";
-import EmptyState from "../../components/Vehicle/EmptyState";
+import { useDispatch, useSelector } from "react-redux";
+import AddVehicleForm from "../../components/vehicle/AddVehicleForm";
+import VehicleCard from "../../components/vehicle/VehicleCard";
+import {
+  fetchVehicles,
+  createVehicle,
+  updateVehicle,
+  deleteVehicle,
+} from "../../features/customer/vehicles/vehicleThunks";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const VehicleDashboard = () => {
-  const [vehicles, setVehicles] = useState([
-    {
-      id: 1,
-      vehiclePhotoUrl:
-        "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSb7QmFGY2JOPUEY6klNHN2iCNXUIvOChVwEO8jZqGEOTZdHNUjeuzsyplsk7HhIW1mHEWLd2Odmzlfqgb579jCoJ6owfRwMp1izV5MQRR3eV_cpjDj8-vB",
-      vehicleMake: "BMW",
-      vehicleModel: "320d Luxury Line",
-      vehicleYear: "2022",
-      carType: "Sedan",
-      registrationNumber: "MH12AB1234",
-      vin: "WBA8E31060G123456",
-      engineNumber: "N47D20T0",
-      ownerName: "John Doe",
-      ownerMobile: "9876543210",
-      ownerEmail: "john.doe@example.com",
-      insuranceCompany: "HDFC ERGO",
-      policyNumber: "POL123456789",
-      insuranceType: "Comprehensive",
-      premiumAmount: "45000",
-      insuranceStartDate: "01-01-2025",
-      insuranceExpiryDate: "01-01-2026",
-      insuranceContact: "1800-123-4567",
-      pucCertificateNo: "PUC1234567",
-      pucValidityDate: "31-12-2025",
-      roadTaxCertificateNo: "RT1234567",
-      roadTaxValidityDate: "01-01-2030",
-      lastServiceDate: "15-12-2024",
-      lastServiceKM: "15000",
-      nextServiceDueDate: "15-06-2025",
-      nextServiceDueKM: "25000",
-      oilChangeDate: "15-12-2024",
-      oilChangeKM: "15000",
-      batteryChangeDate: "01-01-2025",
-      tyreChangeDate: "01-12-2024",
-      brakeInspectionDate: "15-12-2024",
-      suspensionCheckDate: "15-12-2024",
-      wheelAlignmentDate: "01-12-2024",
-      transmissionOilChangeDate: "01-12-2024",
-      avgMonthlyKM: "1200",
-      insuranceReminderDate: "01-12-2025",
-      pucReminderDate: "15-11-2025",
-      nextServiceReminderDate: "15-05-2025",
-    },
-  ]);
+export default function VehicleDashboard() {
+  const dispatch = useDispatch();
+  const { items: vehicles, loading } = useSelector((s) => s.vehicles);
 
   const [openForm, setOpenForm] = useState(false);
   const [editVehicle, setEditVehicle] = useState(null);
-  const [deleteVehicle, setDeleteVehicle] = useState(null);
-  const [expandedCardId, setExpandedCardId] = useState(null); // For expanding one at a time
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [expandedCardId, setExpandedCardId] = useState(null);
 
-  const handleSaveVehicle = (vehicleData) => {
-    if (editVehicle) {
-      setVehicles((prev) =>
-        prev.map((v) =>
-          v.id === editVehicle.id ? { ...v, ...vehicleData } : v
-        )
-      );
-    } else {
-      const newVehicle = {
-        id: Date.now(),
-        ...vehicleData,
-      };
-      setVehicles((prev) => [...prev, newVehicle]);
+  useEffect(() => {
+    dispatch(fetchVehicles());
+  }, [dispatch]);
+
+  const handleSaveVehicle = async (payload) => {
+    try {
+      if (editVehicle) {
+        await dispatch(
+          updateVehicle({ id: editVehicle.id, updates: payload })
+        ).unwrap();
+        toast.success("Vehicle updated");
+      } else {
+        await dispatch(createVehicle(payload)).unwrap();
+        toast.success("Vehicle added");
+      }
+      setEditVehicle(null);
+      setOpenForm(false);
+    } catch (e) {
+      toast.error(e || "Failed to save vehicle");
     }
-    setEditVehicle(null);
-    setOpenForm(false);
   };
 
-  const handleDeleteVehicle = () => {
-    setVehicles((prev) => prev.filter((v) => v.id !== deleteVehicle.id));
-    setDeleteVehicle(null);
+  const handleDeleteVehicle = async () => {
+    try {
+      await dispatch(deleteVehicle(deleteTarget.id)).unwrap();
+      toast.success("Vehicle deleted");
+    } catch (e) {
+      toast.error(e || "Delete failed");
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -95,27 +72,34 @@ const VehicleDashboard = () => {
         mb={8}
         className="text-blue-700"
       >
-        🚗 Trasure Vehicle Manager
+        🚗 MechanIQ Vehicle Manager
       </Typography>
 
-      {vehicles.length === 0 ? (
-        <EmptyState onAddVehicle={() => setOpenForm(true)} />
+      {loading ? (
+        <Box className="flex items-center justify-center h-64">
+          <CircularProgress />
+        </Box>
+      ) : vehicles.length === 0 ? (
+        <Stack alignItems="center" spacing={2}>
+          <Typography>No vehicles yet.</Typography>
+          <Button variant="contained" onClick={() => setOpenForm(true)}>
+            Add Vehicle
+          </Button>
+        </Stack>
       ) : (
         <Stack spacing={4} className="max-w-5xl mx-auto">
-          {vehicles.map((vehicle) => (
+          {vehicles.map((v) => (
             <VehicleCard
-              key={vehicle.id}
-              vehicle={vehicle}
-              onEdit={(v) => {
-                setEditVehicle(v);
+              key={v.id}
+              vehicle={v}
+              onEdit={(vehicle) => {
+                setEditVehicle(vehicle);
                 setOpenForm(true);
               }}
-              onDelete={(v) => setDeleteVehicle(v)}
-              isExpanded={expandedCardId === vehicle.id}
+              onDelete={(vehicle) => setDeleteTarget(vehicle)}
+              isExpanded={expandedCardId === v.id}
               onExpand={() =>
-                setExpandedCardId((prevId) =>
-                  prevId === vehicle.id ? null : vehicle.id
-                )
+                setExpandedCardId((prev) => (prev === v.id ? null : v.id))
               }
             />
           ))}
@@ -141,12 +125,12 @@ const VehicleDashboard = () => {
       />
 
       <Dialog
-        open={Boolean(deleteVehicle)}
-        onClose={() => setDeleteVehicle(null)}
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogActions>
-          <Button onClick={() => setDeleteVehicle(null)}>Cancel</Button>
+          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button
             variant="contained"
             color="error"
@@ -156,8 +140,8 @@ const VehicleDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ToastContainer position="top-right" autoClose={2000} />
     </Box>
   );
-};
-
-export default VehicleDashboard;
+}

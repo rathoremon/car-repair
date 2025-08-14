@@ -34,7 +34,7 @@ const GetStartedCTA = () => {
           className="text-blue-100 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           Your car deserves the best. 10,000+ car owners trust{" "}
-          <span className="font-bold text-white">Trasure</span> for quality,
+          <span className="font-bold text-white">MechanIQ</span> for quality,
           speed, and transparency.
         </motion.p>
 

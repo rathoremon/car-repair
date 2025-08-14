@@ -104,19 +104,18 @@ const HowItWorks = () => {
       {/* Title */}
       <div className="relative text-center mb-16 z-10 px-6">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-800 mb-4 leading-tight">
-          Your Journey with Trasure
+          Your Journey with MechanIQ
         </h2>
         <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
           Every step of car care — smooth, fast, transparent.
         </p>
       </div>
-{/* Step Cards */}
-<div className="relative z-10 flex flex-col items-center  text-center sm:grid sm:grid-cols-3 sm:text-left gap-10 px-4 sm:px-8 max-w-7xl mx-auto">
-  {steps.map((step, idx) => (
-    <StepCard key={step.title} step={idx + 1} {...step} />
-  ))}
-</div>
-
+      {/* Step Cards */}
+      <div className="relative z-10 flex flex-col items-center  text-center sm:grid sm:grid-cols-3 sm:text-left gap-10 px-4 sm:px-8 max-w-7xl mx-auto">
+        {steps.map((step, idx) => (
+          <StepCard key={step.title} step={idx + 1} {...step} />
+        ))}
+      </div>
     </section>
   );
 };

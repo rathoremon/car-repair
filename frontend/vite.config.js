@@ -15,8 +15,8 @@ export default defineConfig({
     //     "pwa-512x512.png",
     //   ],
     //   manifest: {
-    //     name: "Trasure",
-    //     short_name: "Trasure",
+    //     name: "MechanIQ",
+    //     short_name: "MechanIQ",
     //     description: "Let Travel Be A Treasure",
     //     theme_color: "#1e293b", // MUI primary.main
     //     background_color: "#ffffff", // MUI background.default

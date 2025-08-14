@@ -29,7 +29,7 @@ const users = [
   {
     id: 2,
     name: "Ravi",
-    email: "ravi@trasure.com",
+    email: "ravi@MechanIQ.com",
     role: "provider",
     status: "inactive",
   },
